@@ -37,7 +37,7 @@
 ```
 
 **技术栈：**
-- 后端：Go + Gin + PostgreSQL，Docker 镜像部署到微信云托管
+- 后端：Go + Gin + MySQL 5.7，Docker 镜像部署到微信云托管（MySQL 由云托管提供）
 - Web：React + TypeScript + Recharts + Ant Design，通过 IP 地址访问（局域网/本地）
 - 小程序：微信原生（WXML/JS）+ wx-charts，通过微信内网专线调用后端，无需域名备案
 - 认证：JWT（Web 账号密码 / 小程序微信 openid）
@@ -49,57 +49,59 @@
 
 ## 3. 数据模型
 
+**注：** 数据库为 MySQL 5.7（由微信云托管提供）。所有主键和外键使用 `CHAR(36)` 存储 UUID，UUID 由应用层生成（Go 的 `github.com/google/uuid` 库）。
+
 ### families
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| id | UUID | 主键 |
-| name | string | 家庭名称 |
-| created_at | timestamp | 创建时间 |
+| id | CHAR(36) | 主键，UUID |
+| name | VARCHAR(100) | 家庭名称 |
+| created_at | DATETIME | 创建时间 |
 
 ### users
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| id | UUID | 主键 |
-| family_id | UUID | 关联家庭（可为空：小程序用户注册后未加入家庭时为空） |
-| username | string | Web 登录用（可为空） |
-| password_hash | string | Web 密码哈希（可为空） |
-| wx_openid | string | 微信 openid（可为空） |
-| nickname | string | 显示名称 |
-| role | enum | owner / member（无家庭时为空） |
-| created_at | timestamp | 创建时间 |
+| id | CHAR(36) | 主键，UUID |
+| family_id | CHAR(36) | 关联家庭（可为 NULL：小程序用户未加入家庭时） |
+| username | VARCHAR(50) | Web 登录用（可为 NULL） |
+| password_hash | VARCHAR(255) | Web 密码哈希（可为 NULL） |
+| wx_openid | VARCHAR(100) | 微信 openid（可为 NULL） |
+| nickname | VARCHAR(50) | 显示名称 |
+| role | ENUM('owner','member') | 角色（可为 NULL：未加入家庭时） |
+| created_at | DATETIME | 创建时间 |
 
 ### children
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| id | UUID | 主键 |
-| family_id | UUID | 关联家庭 |
-| name | string | 孩子姓名 |
-| gender | enum | male / female |
-| birth_date | date | 出生日期 |
-| created_at | timestamp | 创建时间 |
+| id | CHAR(36) | 主键，UUID |
+| family_id | CHAR(36) | 关联家庭 |
+| name | VARCHAR(50) | 孩子姓名 |
+| gender | ENUM('male','female') | 性别 |
+| birth_date | DATE | 出生日期 |
+| created_at | DATETIME | 创建时间 |
 
 ### measurements
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| id | UUID | 主键 |
-| child_id | UUID | 关联孩子 |
-| type | enum | weight / height / head_circumference |
-| value | float | 数值（kg / cm） |
-| measured_at | date | 测量日期 |
-| note | string | 备注（可为空） |
-| created_by | UUID | 录入用户 |
-| created_at | timestamp | 创建时间 |
+| id | CHAR(36) | 主键，UUID |
+| child_id | CHAR(36) | 关联孩子 |
+| type | ENUM('weight','height','head_circumference') | 类型 |
+| value | DECIMAL(6,2) | 数值（weight: kg；height/head_circumference: cm） |
+| measured_at | DATE | 测量日期 |
+| note | VARCHAR(500) | 备注（可为 NULL） |
+| created_by | CHAR(36) | 录入用户 ID |
+| created_at | DATETIME | 创建时间 |
 
 ### invite_codes
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| id | UUID | 主键 |
-| family_id | UUID | 关联家庭 |
-| code | string | 6位邀请码 |
-| expires_at | timestamp | 过期时间（24小时） |
-| used | boolean | 是否已使用（单次有效，使用后不可复用） |
-| created_by | UUID | 生成邀请码的用户 ID |
-| created_at | timestamp | 创建时间 |
+| id | CHAR(36) | 主键，UUID |
+| family_id | CHAR(36) | 关联家庭 |
+| code | CHAR(6) | 6位邀请码 |
+| expires_at | DATETIME | 过期时间（24小时） |
+| used | TINYINT(1) | 是否已使用（单次有效，使用后不可复用） |
+| created_by | CHAR(36) | 生成邀请码的用户 ID |
+| created_at | DATETIME | 创建时间 |
 
 ---
 
@@ -260,9 +262,9 @@ WHO 数据（0-60月龄，P3/P50/P97）内嵌在后端代码中，不存数据�
 - **后端**：打包 Docker 镜像，部署到**微信云托管（CloudRun）**
   - 小程序调用走微信内网专线，无需域名、无需 ICP 备案
   - 按量计费，家庭级流量费用极低
-- **数据库**：PostgreSQL，作为云托管的附属服务或同区腾讯云数据库
+- **数据库**：MySQL 5.7，由微信云托管提供和管理
 - **Web 端**：React 构建产物托管在任意静态服务器（或本机），通过云托管公网 IP + 端口访问（仅家庭内部使用，不对外公开，无需备案）
-- **数据库迁移**：使用 `golang-migrate`，迁移文件纳入版本控制
+- **数据库迁移**：使用 `golang-migrate`（支持 MySQL），迁移文件纳入版本控制
 - **配置管理**：敏感配置（数据库 DSN、JWT Secret、微信 AppID/Secret）通过环境变量注入；本地开发用 `.env` 文件，云托管通过控制台环境变量配置，禁止硬编码
 
 ### 域名备案
