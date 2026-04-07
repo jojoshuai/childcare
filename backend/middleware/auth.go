@@ -45,7 +45,7 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 		tokenStr := parts[1]
 		claims := &Claims{}
 
-		token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (any, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, jwt.ErrSignatureInvalid
 			}

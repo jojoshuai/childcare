@@ -344,7 +344,7 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 
 	// 1. Parse and validate the refresh token.
 	claims := &authClaims{}
-	token, err := jwt.ParseWithClaims(req.RefreshToken, claims, func(t *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(req.RefreshToken, claims, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
 		}

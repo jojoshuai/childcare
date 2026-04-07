@@ -130,7 +130,7 @@ func newTestRouter(h *handler.AuthHandler) *gin.Engine {
 	return r
 }
 
-func postJSON(r *gin.Engine, path string, body interface{}) *httptest.ResponseRecorder {
+func postJSON(r *gin.Engine, path string, body any) *httptest.ResponseRecorder {
 	b, _ := json.Marshal(body)
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest(http.MethodPost, path, bytes.NewReader(b))
@@ -158,7 +158,7 @@ func TestRegister_HappyPath(t *testing.T) {
 		t.Fatalf("expected 201, got %d: %s", w.Code, w.Body.String())
 	}
 
-	var resp map[string]interface{}
+	var resp map[string]any
 	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
 		t.Fatal(err)
 	}
@@ -168,7 +168,7 @@ func TestRegister_HappyPath(t *testing.T) {
 	if _, ok := resp["refresh_token"]; !ok {
 		t.Fatalf("refresh_token missing in response: %s", w.Body.String())
 	}
-	user, ok := resp["user"].(map[string]interface{})
+	user, ok := resp["user"].(map[string]any)
 	if !ok {
 		t.Fatalf("user object missing in response: %s", w.Body.String())
 	}
@@ -198,7 +198,7 @@ func TestRegister_UsernameTaken(t *testing.T) {
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d: %s", w.Code, w.Body.String())
 	}
-	var resp map[string]interface{}
+	var resp map[string]any
 	json.Unmarshal(w.Body.Bytes(), &resp)
 	if resp["code"] != "USERNAME_TAKEN" {
 		t.Fatalf("expected USERNAME_TAKEN, got: %v", resp["code"])
@@ -253,7 +253,7 @@ func TestLogin_ValidCredentials(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
 	}
-	var resp map[string]interface{}
+	var resp map[string]any
 	json.Unmarshal(w.Body.Bytes(), &resp)
 	if _, ok := resp["token"]; !ok {
 		t.Fatal("token missing")
@@ -309,7 +309,7 @@ func TestWxLogin_NewUser(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
 	}
-	var resp map[string]interface{}
+	var resp map[string]any
 	json.Unmarshal(w.Body.Bytes(), &resp)
 	if _, ok := resp["token"]; !ok {
 		t.Fatal("token missing")
@@ -378,7 +378,7 @@ func getRefreshToken(t *testing.T, r *gin.Engine) string {
 	if w.Code != http.StatusOK {
 		t.Fatalf("login failed: %d %s", w.Code, w.Body.String())
 	}
-	var resp map[string]interface{}
+	var resp map[string]any
 	json.Unmarshal(w.Body.Bytes(), &resp)
 	return resp["refresh_token"].(string)
 }
@@ -399,7 +399,7 @@ func TestRefresh_ValidToken(t *testing.T) {
 	if wLogin.Code != http.StatusOK {
 		t.Fatalf("login failed: %d", wLogin.Code)
 	}
-	var loginResp map[string]interface{}
+	var loginResp map[string]any
 	json.Unmarshal(wLogin.Body.Bytes(), &loginResp)
 	refreshToken := loginResp["refresh_token"].(string)
 
@@ -410,7 +410,7 @@ func TestRefresh_ValidToken(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
 	}
-	var resp map[string]interface{}
+	var resp map[string]any
 	json.Unmarshal(w.Body.Bytes(), &resp)
 	if _, ok := resp["token"]; !ok {
 		t.Fatal("new access token missing")
