@@ -29,7 +29,7 @@ func (s *MySQLMeasurementStore) Create(m *model.Measurement) error {
 func (s *MySQLMeasurementStore) GetByChildID(childID string, measureType *string) ([]*model.Measurement, error) {
 	query := `SELECT id, child_id, type, value, measured_at, note, created_by, created_at
               FROM measurements WHERE child_id = ?`
-	args := []interface{}{childID}
+	args := []any{childID}
 
 	if measureType != nil {
 		query += ` AND type = ?`
