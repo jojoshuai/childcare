@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS invite_codes;
+DROP TABLE IF EXISTS measurements;
+DROP TABLE IF EXISTS children;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS families;
