@@ -1,0 +1,212 @@
+# Childcare Growth Tracker — Design Spec
+
+**Date:** 2026-04-07
+**Scope:** MVP — 身高/体重/头围记录 + 生长曲线图 + Web + 微信小程序 + 家庭共享
+
+---
+
+## 1. 产品目标
+
+为家长提供一个私有化部署的孩子成长数据记录工具，支持：
+- 记录孩子的身高、体重、头围数据
+- 生成叠加 WHO 标准百分位线的生长曲线图
+- Web 端查看图表，微信小程序快速录入
+- 家庭成员（包括老人）通过邀请码加入共享
+
+---
+
+## 2. 整体架构
+
+```
+┌─────────────────┐    ┌─────────────────┐
+│   Web (React)   │    │  微信小程序      │
+│  电脑查看图表    │    │  手机快速录入    │
+└────────┬────────┘    └────────┬────────┘
+         │  HTTPS REST API      │
+         └──────────┬───────────┘
+              ┌─────▼──────┐
+              │  Go + Gin  │
+              │   后端服务  │
+              └─────┬──────┘
+              ┌─────▼──────┐
+              │ PostgreSQL │
+              │   数据库    │
+              └────────────┘
+          （部署在腾讯云轻量应用服务器）
+```
+
+**技术栈：**
+- 后端：Go + Gin + PostgreSQL
+- Web：React + TypeScript + Recharts + Ant Design
+- 小程序：微信原生（WXML/JS）+ wx-charts
+- 认证：JWT（Web 账号密码 / 小程序微信 openid）
+
+---
+
+## 3. 数据模型
+
+### families
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | UUID | 主键 |
+| name | string | 家庭名称 |
+| created_at | timestamp | 创建时间 |
+
+### users
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | UUID | 主键 |
+| family_id | UUID | 关联家庭 |
+| username | string | Web 登录用（可为空） |
+| password_hash | string | Web 密码哈希（可为空） |
+| wx_openid | string | 微信 openid（可为空） |
+| nickname | string | 显示名称 |
+| role | enum | owner / member |
+| created_at | timestamp | 创建时间 |
+
+### children
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | UUID | 主键 |
+| family_id | UUID | 关联家庭 |
+| name | string | 孩子姓名 |
+| gender | enum | male / female |
+| birth_date | date | 出生日期 |
+| created_at | timestamp | 创建时间 |
+
+### measurements
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | UUID | 主键 |
+| child_id | UUID | 关联孩子 |
+| type | enum | weight / height / head_circumference |
+| value | float | 数值（kg / cm） |
+| measured_at | date | 测量日期 |
+| note | string | 备注（可为空） |
+| created_by | UUID | 录入用户 |
+| created_at | timestamp | 创建时间 |
+
+### invite_codes
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | UUID | 主键 |
+| family_id | UUID | 关联家庭 |
+| code | string | 6位邀请码 |
+| expires_at | timestamp | 过期时间（24小时） |
+| used | boolean | 是否已使用 |
+
+---
+
+## 4. API 设计
+
+### 认证
+```
+POST /api/auth/register          # Web 注册（username + password）
+POST /api/auth/login             # Web 登录，返回 JWT
+POST /api/auth/wx-login          # 小程序登录（传微信 code），返回 JWT
+```
+
+### 家庭 & 邀请
+```
+GET  /api/family                 # 获取家庭信息及成员列表
+POST /api/family/invite          # 生成邀请码（6位，24小时有效）
+POST /api/family/join            # 用邀请码加入家庭
+```
+
+### 孩子
+```
+GET  /api/children               # 获取家庭下所有孩子
+POST /api/children               # 添加孩子
+PUT  /api/children/:id           # 编辑孩子信息
+```
+
+### 测量记录
+```
+GET    /api/children/:id/measurements        # 获取测量历史（支持 ?type= 筛选）
+POST   /api/children/:id/measurements        # 添加记录
+PUT    /api/children/:id/measurements/:mid   # 编辑记录
+DELETE /api/children/:id/measurements/:mid   # 删除记录
+```
+
+### WHO 参考数据
+```
+GET /api/who-standards?gender=female&type=weight  # 获取 WHO 百分位数据
+```
+WHO 数据（0-60月龄，P3/P50/P97）内嵌在后端代码中，不存数据库。
+
+---
+
+## 5. Web 端设计（React）
+
+### 页面结构
+```
+/login              # 登录 / 注册
+/dashboard          # 首页：孩子卡片列表
+/children/:id       # 孩子详情页
+/family             # 家庭管理
+```
+
+### 孩子详情页（核心）
+- 顶部 Tab：体重 / 身高 / 头围
+- 图表区：
+  - 折线图（Recharts），X轴日期，Y轴数值
+  - 孩子数据用醒目颜色折线
+  - WHO P3、P50、P97 灰色虚线叠加
+  - Hover 显示具体数值
+- 记录列表：表格，支持编辑 / 删除
+- 浮动按钮：添加记录（弹窗：日期 + 数值 + 可选备注）
+
+---
+
+## 6. 微信小程序设计
+
+### 页面结构
+```
+/pages/login        # 微信授权登录
+/pages/index        # 首页：孩子列表
+/pages/add          # 快速录入（核心）
+/pages/chart        # 简版生长曲线图
+/pages/family       # 家庭管理 / 邀请码加入
+```
+
+### 快速录入页（核心）
+1. 选择孩子（单个孩子时默认选中）
+2. 选择类型：体重 / 身高 / 头围（大按钮）
+3. 输入数值（数字键盘）
+4. 日期默认今天（可修改）
+5. 提交
+
+### 老人加入流程
+```
+Web 端生成邀请码（如：AB1234，24小时有效）
+         ↓
+老人打开小程序 → 点"加入家庭" → 输入邀请码
+         ↓
+微信授权 → 绑定 openid → 加入家庭组
+```
+
+### 图表
+使用 wx-charts，展示趋势折线 + P50 参考线（小屏适配，简化显示）。
+
+---
+
+## 7. 部署
+
+- 服务器：腾讯云轻量应用服务器（2核2G，推荐）
+- 域名：需备案，用于微信小程序 HTTPS 接口
+- 后端：Go 单二进制 + systemd 管理
+- 数据库：PostgreSQL（同服务器）
+- Web：Nginx 静态托管 React 构建产物
+- HTTPS：Let's Encrypt 免费证书
+
+---
+
+## 8. MVP 范围（不在此次实现）
+
+以下功能明确排除在 MVP 之外：
+- 疫苗接种管理
+- 成长里程碑
+- 成长相册
+- 喂奶 / 睡眠 / 换尿布记录
+- 数据导出（PDF/Excel）
+- 智能提醒推送
