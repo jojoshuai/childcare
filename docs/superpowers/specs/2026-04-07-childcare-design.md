@@ -56,12 +56,12 @@
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | id | UUID | 主键 |
-| family_id | UUID | 关联家庭 |
+| family_id | UUID | 关联家庭（可为空：小程序用户注册后未加入家庭时为空） |
 | username | string | Web 登录用（可为空） |
 | password_hash | string | Web 密码哈希（可为空） |
 | wx_openid | string | 微信 openid（可为空） |
 | nickname | string | 显示名称 |
-| role | enum | owner / member |
+| role | enum | owner / member（无家庭时为空） |
 | created_at | timestamp | 创建时间 |
 
 ### children
@@ -99,40 +99,68 @@
 
 ## 4. API 设计
 
+### 错误响应格式
+
+所有接口错误统一返回如下结构：
+```json
+{
+  "code": "INVALID_INVITE_CODE",
+  "message": "邀请码无效或已过期"
+}
+```
+HTTP 状态码遵循语义：400 参数错误、401 未登录、403 无权限、404 资源不存在、500 服务器错误。
+
 ### 认证
-```
-POST /api/auth/register          # Web 注册（username + password）
-POST /api/auth/login             # Web 登录，返回 JWT
-POST /api/auth/wx-login          # 小程序登录（传微信 code），返回 JWT
-```
+
+`POST /api/auth/register` — Web 注册。原子性地创建用户 + 家庭，用户角色为 `owner`，`family_id` 在创建时赋值。请求体：`{username, password, family_name, nickname}`，返回 `{token, refresh_token, user}`。
+
+`POST /api/auth/login` — Web 登录。返回同上。
+
+`POST /api/auth/wx-login` — 小程序登录。传微信 `code`，后端换取 `openid`。若 openid 已存在则登录，否则创建新用户（此时 `family_id` 为空，用户需通过邀请码加入家庭后才能操作数据）。返回 `{token, refresh_token, user}`。
+
+`POST /api/auth/refresh` — 刷新 token。Access token 有效期 7 天，refresh token 有效期 30 天。小程序每次启动检查 token 是否即将过期，自动刷新。
 
 ### 家庭 & 邀请
+
+权限规则：仅 `owner` 可生成邀请码；`owner` 和 `member` 均可查看家庭信息和录入数据。
+
 ```
-GET  /api/family                 # 获取家庭信息及成员列表
-POST /api/family/invite          # 生成邀请码（6位，24小时有效）
-POST /api/family/join            # 用邀请码加入家庭
+GET  /api/family                 # 获取家庭信息及成员列表（需已加入家庭）
+POST /api/family/invite          # 生成邀请码（仅 owner，6位，24小时有效）
+POST /api/family/join            # 用邀请码加入家庭（小程序用户初次加入）
 ```
 
 ### 孩子
+
+`owner` 和 `member` 均可添加、编辑孩子信息；仅 `owner` 可删除孩子（删除会级联删除该孩子所有测量记录）。
+
 ```
-GET  /api/children               # 获取家庭下所有孩子
-POST /api/children               # 添加孩子
-PUT  /api/children/:id           # 编辑孩子信息
+GET    /api/children             # 获取家庭下所有孩子
+POST   /api/children             # 添加孩子
+PUT    /api/children/:id         # 编辑孩子信息
+DELETE /api/children/:id         # 删除孩子（仅 owner，级联删除测量记录）
 ```
 
 ### 测量记录
+
+MVP 返回全量记录，不分页（预计单孩子 5 年内数据量 < 200 条，可接受）。支持 `?type=` 筛选；`type` 枚举值统一使用英文：`weight` / `height` / `head_circumference`。
+
+当孩子月龄超过 60 个月（5岁）时，图表不显示 WHO 参考线，并在前端提示"WHO 参考数据覆盖范围为 0-60 个月"。
+
 ```
-GET    /api/children/:id/measurements        # 获取测量历史（支持 ?type= 筛选）
+GET    /api/children/:id/measurements        # 获取测量历史（支持 ?type=weight|height|head_circumference）
 POST   /api/children/:id/measurements        # 添加记录
 PUT    /api/children/:id/measurements/:mid   # 编辑记录
 DELETE /api/children/:id/measurements/:mid   # 删除记录
 ```
 
+测量值合理范围（后端校验）：体重 0.5–200 kg；身高 20–250 cm；头围 20–80 cm。
+
 ### WHO 参考数据
 ```
 GET /api/who-standards?gender=female&type=weight  # 获取 WHO 百分位数据
 ```
-WHO 数据（0-60月龄，P3/P50/P97）内嵌在后端代码中，不存数据库。
+WHO 数据（0-60月龄，P3/P50/P97）内嵌在后端代码中，不存数据库。`type` 参数与测量记录使用相同枚举值。
 
 ---
 
@@ -177,13 +205,20 @@ WHO 数据（0-60月龄，P3/P50/P97）内嵌在后端代码中，不存数据�
 5. 提交
 
 ### 老人加入流程
+
+流程顺序：先微信授权登录，再输入邀请码加入家庭。
+
 ```
-Web 端生成邀请码（如：AB1234，24小时有效）
+老人打开小程序
          ↓
-老人打开小程序 → 点"加入家庭" → 输入邀请码
+微信授权（获取 openid，创建无家庭账号）
          ↓
-微信授权 → 绑定 openid → 加入家庭组
+进入"加入家庭"页 → 输入邀请码（如：AB1234）
+         ↓
+加入家庭组 → 可以录入数据
 ```
+
+老人只需要会用微信，不需要记任何账号密码。
 
 ### 图表
 使用 wx-charts，展示趋势折线 + P50 参考线（小屏适配，简化显示）。
@@ -193,11 +228,13 @@ Web 端生成邀请码（如：AB1234，24小时有效）
 ## 7. 部署
 
 - 服务器：腾讯云轻量应用服务器（2核2G，推荐）
-- 域名：需备案，用于微信小程序 HTTPS 接口
+- 域名：**需 ICP 备案**，这是微信小程序上线的硬性前提，备案周期约 10-20 个工作日，需提前办理
 - 后端：Go 单二进制 + systemd 管理
 - 数据库：PostgreSQL（同服务器）
 - Web：Nginx 静态托管 React 构建产物
 - HTTPS：Let's Encrypt 免费证书
+- 数据库迁移：使用 `golang-migrate`，迁移文件纳入版本控制
+- 配置管理：敏感配置（数据库 DSN、JWT Secret、微信 AppID/Secret）通过环境变量注入，使用 `.env` 文件本地开发，systemd `EnvironmentFile` 生产环境加载，禁止硬编码
 
 ---
 
