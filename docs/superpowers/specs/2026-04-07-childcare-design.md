@@ -93,7 +93,9 @@
 | family_id | UUID | 关联家庭 |
 | code | string | 6位邀请码 |
 | expires_at | timestamp | 过期时间（24小时） |
-| used | boolean | 是否已使用 |
+| used | boolean | 是否已使用（单次有效，使用后不可复用） |
+| created_by | UUID | 生成邀请码的用户 ID |
+| created_at | timestamp | 创建时间 |
 
 ---
 
@@ -112,13 +114,29 @@ HTTP 状态码遵循语义：400 参数错误、401 未登录、403 无权限、
 
 ### 认证
 
-`POST /api/auth/register` — Web 注册。原子性地创建用户 + 家庭，用户角色为 `owner`，`family_id` 在创建时赋值。请求体：`{username, password, family_name, nickname}`，返回 `{token, refresh_token, user}`。
+`POST /api/auth/register` — Web 注册。原子性地创建用户 + 家庭，用户角色为 `owner`，`family_id` 在创建时赋值。请求体：`{username, password, family_name, nickname}`，返回 `{token, refresh_token, user}`。**Web 注册始终创建新家庭**，Web 用户不支持加入已有家庭（仅小程序通过邀请码加入）。
 
 `POST /api/auth/login` — Web 登录。返回同上。
 
 `POST /api/auth/wx-login` — 小程序登录。传微信 `code`，后端换取 `openid`。若 openid 已存在则登录，否则创建新用户（此时 `family_id` 为空，用户需通过邀请码加入家庭后才能操作数据）。返回 `{token, refresh_token, user}`。
 
-`POST /api/auth/refresh` — 刷新 token。Access token 有效期 7 天，refresh token 有效期 30 天。小程序每次启动检查 token 是否即将过期，自动刷新。
+`POST /api/auth/refresh` — 刷新 token。Access token 有效期 7 天，refresh token 有效期 30 天。refresh token 过期后用户需重新登录。小程序每次启动检查 token 是否即将过期，自动刷新。
+
+**所有三个认证接口返回的 `user` 对象结构：**
+```json
+{
+  "id": "uuid",
+  "nickname": "张三",
+  "family_id": "uuid 或 null",
+  "role": "owner 或 member 或 null"
+}
+```
+小程序可通过 `family_id === null` 判断用户尚未加入家庭，引导进入邀请码页面。
+
+**未加入家庭的用户（`family_id` 为空）调用任何数据接口时，返回 403：**
+```json
+{ "code": "NO_FAMILY_JOINED", "message": "请先通过邀请码加入家庭" }
+```
 
 ### 家庭 & 邀请
 
@@ -128,6 +146,9 @@ HTTP 状态码遵循语义：400 参数错误、401 未登录、403 无权限、
 GET  /api/family                 # 获取家庭信息及成员列表（需已加入家庭）
 POST /api/family/invite          # 生成邀请码（仅 owner，6位，24小时有效）
 POST /api/family/join            # 用邀请码加入家庭（小程序用户初次加入）
+                                 # 错误码：INVITE_CODE_NOT_FOUND（不存在）
+                                 #         INVITE_CODE_EXPIRED（已过期）
+                                 #         INVITE_CODE_ALREADY_USED（已被使用）
 ```
 
 ### 孩子
