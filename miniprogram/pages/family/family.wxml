@@ -1,0 +1,43 @@
+<!-- miniprogram/pages/family/family.wxml -->
+<view class="container">
+  <view wx:if="{{loading}}" class="empty-tip">加载中…</view>
+
+  <view wx:elif="{{family}}">
+    <!-- 家庭名称 -->
+    <view class="family-name">{{family.name}}</view>
+
+    <!-- 成员列表 -->
+    <view class="card">
+      <view class="section-label">家庭成员</view>
+      <view class="member-item" wx:for="{{family.members}}" wx:key="id">
+        <view class="member-avatar">{{item.nickname.slice(0,1)}}</view>
+        <view class="member-name">{{item.nickname}}</view>
+        <view class="member-role {{item.role === 'owner' ? 'role-owner' : 'role-member'}}">
+          {{item.role === 'owner' ? '创建者' : '成员'}}
+        </view>
+      </view>
+    </view>
+
+    <!-- 邀请码（仅 owner） -->
+    <view class="card" wx:if="{{isOwner}}">
+      <view class="section-label">邀请家人加入</view>
+      <view class="invite-desc">生成邀请码后，将 6 位码告诉家人，他们在小程序输入即可加入。</view>
+
+      <button
+        class="btn-primary"
+        loading="{{generating}}"
+        disabled="{{generating}}"
+        bindtap="onGenerate"
+      >生成邀请码</button>
+
+      <view wx:if="{{invite}}" class="invite-result">
+        <view class="invite-code" bindlongpress="onCopyCode">{{invite.code}}</view>
+        <view class="invite-expire">有效期至 {{invite.expireTime}}</view>
+        <view class="invite-copy-hint">长按邀请码可复制</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 退出提示（小程序不支持退出账号，说明一下） -->
+  <view class="logout-note">账号绑定微信，打开小程序自动登录</view>
+</view>
