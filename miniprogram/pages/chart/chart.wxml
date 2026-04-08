@@ -1,0 +1,50 @@
+<!-- miniprogram/pages/chart/chart.wxml -->
+<view class="container">
+  <!-- 顶部信息 -->
+  <view class="child-header">
+    <text class="child-name">{{childName}}</text>
+    <text class="child-age">{{childAge}}</text>
+  </view>
+
+  <!-- 类型 Tab -->
+  <view class="tab-row">
+    <view
+      class="tab-item {{type === 'weight' ? 'tab-item--active' : ''}}"
+      bindtap="onTypeChange"
+      data-type="weight"
+    >体重</view>
+    <view
+      class="tab-item {{type === 'height' ? 'tab-item--active' : ''}}"
+      bindtap="onTypeChange"
+      data-type="height"
+    >身高</view>
+    <view
+      class="tab-item {{type === 'head_circumference' ? 'tab-item--active' : ''}}"
+      bindtap="onTypeChange"
+      data-type="head_circumference"
+    >头围</view>
+  </view>
+
+  <!-- 图表区 -->
+  <view class="chart-card card">
+    <view wx:if="{{chartLoading}}" class="chart-loading">加载中…</view>
+    <view wx:elif="{{measurements.length === 0}}" class="chart-empty">
+      <view>暂无{{typeLabelMap[type]}}记录</view>
+      <view style="font-size:24rpx;margin-top:8rpx;color:#9ca3af">去"录入"Tab 添加记录</view>
+    </view>
+    <view wx:else>
+      <canvas canvas-id="growthChart" class="chart-canvas" style="width:{{chartWidth}}px;height:250px;"></canvas>
+      <view wx:if="{{!showWHO}}" class="who-tip">WHO 参考数据覆盖范围为 0-60 个月</view>
+    </view>
+  </view>
+
+  <!-- 记录列表 -->
+  <view class="card" wx:if="{{measurements.length > 0}}">
+    <view class="section-label">历史记录</view>
+    <view class="record-item" wx:for="{{measurements}}" wx:key="id">
+      <view class="record-date">{{item.measured_at}}</view>
+      <view class="record-value">{{item.value}} {{unitMap[type]}}</view>
+      <view class="record-del" bindtap="onDelete" data-id="{{item.id}}">🗑</view>
+    </view>
+  </view>
+</view>
