@@ -2,6 +2,6 @@
   "name": "childcare-miniprogram",
   "version": "1.0.0",
   "dependencies": {
-    "wx-charts": "^2.0.0"
+    "wx-charts": "github:xiaolin3303/wx-charts"
   }
 }
