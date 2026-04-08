@@ -1,0 +1,91 @@
+<!-- miniprogram/pages/add/add.wxml -->
+<view class="container">
+
+  <!-- 选孩子（多个孩子时显示） -->
+  <view class="card" wx:if="{{children.length > 1}}">
+    <view class="section-label">选择孩子</view>
+    <picker mode="selector" range="{{children}}" range-key="name" value="{{childIndex}}" bindchange="onChildChange">
+      <view class="picker-row">
+        <text>{{children[childIndex].gender === 'male' ? '👦' : '👧'}} {{children[childIndex].name}}</text>
+        <text class="picker-arrow">▾</text>
+      </view>
+    </picker>
+  </view>
+
+  <!-- 无孩子时提示 -->
+  <view class="card empty-tip" wx:elif="{{children.length === 0}}">
+    暂无孩子，请先在 Web 端添加
+  </view>
+
+  <!-- 有孩子（含只有一个孩子）时显示录入表单 -->
+  <view wx:if="{{children.length > 0}}">
+
+    <!-- 选类型 -->
+    <view class="card">
+      <view class="section-label">测量类型</view>
+      <view class="type-row">
+        <view
+          class="type-btn {{type === 'weight' ? 'type-btn--active' : ''}}"
+          bindtap="onTypeSelect"
+          data-type="weight"
+        >⚖️ 体重</view>
+        <view
+          class="type-btn {{type === 'height' ? 'type-btn--active' : ''}}"
+          bindtap="onTypeSelect"
+          data-type="height"
+        >📏 身高</view>
+        <view
+          class="type-btn {{type === 'head_circumference' ? 'type-btn--active' : ''}}"
+          bindtap="onTypeSelect"
+          data-type="head_circumference"
+        >🔵 头围</view>
+      </view>
+    </view>
+
+    <!-- 输入数值 -->
+    <view class="card">
+      <view class="section-label">{{typeLabelMap[type]}} <text class="hint">{{typeHintMap[type]}}</text></view>
+      <view class="value-row">
+        <input
+          class="value-input"
+          type="digit"
+          placeholder="请输入数值"
+          value="{{value}}"
+          bindinput="onValueInput"
+        />
+        <text class="unit">{{unitMap[type]}}</text>
+      </view>
+    </view>
+
+    <!-- 选日期 -->
+    <view class="card">
+      <view class="section-label">测量日期</view>
+      <picker mode="date" value="{{date}}" end="{{today}}" bindchange="onDateChange">
+        <view class="picker-row">
+          <text>{{date}}</text>
+          <text class="picker-arrow">▾</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 备注 -->
+    <view class="card">
+      <view class="section-label">备注（选填）</view>
+      <input
+        class="note-input"
+        placeholder="可以记录一些备注"
+        value="{{note}}"
+        bindinput="onNoteInput"
+      />
+    </view>
+
+    <!-- 提交 -->
+    <button
+      class="btn-primary"
+      loading="{{loading}}"
+      disabled="{{loading || !value}}"
+      bindtap="onSubmit"
+    >保存记录</button>
+
+  </view>
+</view>
