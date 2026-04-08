@@ -1,0 +1,38 @@
+<!-- miniprogram/pages/index/index.wxml -->
+<view class="container">
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading-wrap">
+    <view class="loading-item" wx:for="{{[1,2,3]}}" wx:key="*this">
+      <view class="skeleton avatar"></view>
+      <view class="skeleton-content">
+        <view class="skeleton line-long"></view>
+        <view class="skeleton line-short"></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:elif="{{children.length === 0}}" class="empty-tip">
+    <view style="font-size:80rpx;margin-bottom:16rpx;">👶</view>
+    <view>暂无孩子信息</view>
+    <view style="margin-top:8rpx;font-size:24rpx;">请在 Web 端添加孩子后刷新</view>
+  </view>
+
+  <!-- 孩子列表 -->
+  <view wx:else>
+    <view
+      class="child-item card"
+      wx:for="{{children}}"
+      wx:key="id"
+      bindtap="onChildTap"
+      data-id="{{item.id}}"
+    >
+      <view class="avatar">{{item.gender === 'male' ? '👦' : '👧'}}</view>
+      <view class="info">
+        <view class="name">{{item.name}}</view>
+        <view class="age">{{item._ageLabel}}</view>
+      </view>
+      <view class="arrow">›</view>
+    </view>
+  </view>
+</view>
