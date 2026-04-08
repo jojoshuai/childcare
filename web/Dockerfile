@@ -3,7 +3,7 @@ WORKDIR /app
 
 # 先拉依赖
 COPY package*.json ./
-RUN npm ci
+RUN npm install --prefer-offline
 
 # 拷贝源码并构建
 COPY . .
