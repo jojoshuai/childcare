@@ -3,7 +3,7 @@
 // 修改 BASE_URL 为你的后端地址：
 //   开发环境：局域网 IP，如 'http://192.168.1.100:8080'
 //   生产环境：微信云托管内网地址
-const BASE_URL = 'http://192.168.1.100:8080'
+const BASE_URL = 'http://caawkcij.childcare.ccwxy1gg.8utosasx.com'
 
 let refreshing = false
 let pendingQueue = []
