@@ -46,3 +46,41 @@
 - 实现 `backend/handler/who.go`（内嵌 WHO 0-60 月龄 P3/P50/P97 数据，男女分别）
 - `go mod tidy` + `go build ./...` + `go test ./...` 全部通过
 - Commit: ae4939e
+
+**用户：** （继续，对话从上下文摘要恢复）
+
+**操作：**
+- 继续执行 `docs/superpowers/plans/2026-04-08-web-frontend.md`
+- 创建目录：`src/api/`, `src/context/`, `src/components/`, `src/pages/`
+- 实现所有 API 模块：`axios.ts`（含 401 刷新拦截器）、`auth.ts`、`children.ts`、`measurements.ts`、`family.ts`、`who.ts`
+- 实现 `AuthContext.tsx`（token + user localStorage 初始化 + login/logout）
+- 实现布局：`AppLayout.tsx` + `Sidebar.tsx`（绿色侧边栏导航）
+- 实现路由：`App.tsx`（React Router v6 + ProtectedRoute）
+- 实现所有页面：`Login.tsx`、`Dashboard.tsx`、`ChildDetail.tsx`、`Family.tsx`
+- 实现组件：`GrowthChart.tsx`（Recharts + WHO 参考线）、`MeasurementDrawer.tsx`（添加/编辑抽屉）
+- 修复编译错误：`verbatimModuleSyntax` 要求所有类型导入使用 `import type`（10 处）
+- `npm run build` 通过（TypeScript 无报错）
+- Commit: 48a79c5
+
+---
+
+## 2026-04-08
+
+**用户：** 微信小程序 MVP 实现
+
+**操作：**
+- 进行了小程序 brainstorm：确认使用微信原生 WXML/JS、wx-charts、静默登录、3-tab 结构（首页/录入/家庭）、globalData 状态管理、WHO P3/P50/P97 参考线
+- 通过 spec review loop 完成 spec 文档：docs/superpowers/specs/2026-04-08-miniprogram-design.md
+- 完成实现计划：docs/superpowers/plans/2026-04-08-miniprogram.md（4 chunks, 10 tasks）
+- 通过 plan review loop（fix: getApp() shim removal, refreshing flag ordering）
+- 通过 subagent-driven-development 实现全部 10 个 tasks：
+  - Task 1: 项目脚手架（目录结构、app.json、package.json、icons）
+  - Task 2: utils/request.js（wx.request 封装 + 401 自动刷新队列）
+  - Task 3: utils/util.js（calcAgeMonths、ageLabel、today）
+  - Task 4: app.js + app.wxss（全局状态 + 静默登录 + 全局样式）
+  - Task 5: pages/join/（邀请码加入家庭）
+  - Task 6: pages/index/（孩子列表 + 下拉刷新 + 骨架屏）
+  - Task 7: pages/add/（快速录入测量数据）
+  - Task 8: pages/family/（家庭成员 + owner 生成邀请码）
+  - Task 9: pages/chart/（wx-charts 生长曲线 + WHO P3/P50/P97 参考线 + 记录列表删除）
+- 所有 tasks 均通过 spec compliance + code quality 两阶段 review
