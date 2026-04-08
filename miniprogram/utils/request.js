@@ -57,6 +57,7 @@ function handleUnauthorized(origReq, resolve, reject) {
     data: { refresh_token: refreshToken },
     header: { 'Content-Type': 'application/json' },
     success(res) {
+      refreshing = false
       if (res.statusCode === 200) {
         getApp().globalData.token = res.data.token
         getApp().globalData.refreshToken = res.data.refresh_token
@@ -77,13 +78,11 @@ function handleUnauthorized(origReq, resolve, reject) {
       }
     },
     fail() {
+      refreshing = false
       pendingQueue.forEach(({ reject }) => reject({ message: '网络错误' }))
       pendingQueue = []
       reLogin()
       reject({ message: '网络错误' })
-    },
-    complete() {
-      refreshing = false
     },
   })
 }
