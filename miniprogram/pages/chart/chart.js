@@ -2,8 +2,7 @@
 const { request } = require('../../utils/request')
 const { calcAgeMonths, ageLabel } = require('../../utils/util')
 
-// 注意：安装 wx-charts 并在微信开发者工具中"构建 npm"后，此 require 才能生效
-const WxCharts = require('wx-charts')
+const WxCharts = require('../../libs/wxcharts')
 
 let chartInstance = null
 
