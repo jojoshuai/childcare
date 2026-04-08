@@ -192,9 +192,11 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	passwordHash := string(hashBytes)
 
 	// 3. Create family.
+	now := time.Now()
 	family := &model.Family{
-		ID:   uuid.NewString(),
-		Name: req.FamilyName,
+		ID:        uuid.NewString(),
+		Name:      req.FamilyName,
+		CreatedAt: now,
 	}
 	if err := h.familyStore.Create(family); err != nil {
 		errorResponse(c, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to create family")
@@ -210,6 +212,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		Nickname:     req.Nickname,
 		FamilyID:     &family.ID,
 		Role:         &role,
+		CreatedAt:    now,
 	}
 	if err := h.userStore.Create(user); err != nil {
 		errorResponse(c, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to create user")
@@ -304,9 +307,10 @@ func (h *AuthHandler) WxLogin(c *gin.Context) {
 		// 3. Create new wx user (no family, no role).
 		nickname := "微信用户"
 		user = &model.User{
-			ID:       uuid.NewString(),
-			WxOpenID: &openid,
-			Nickname: nickname,
+			ID:        uuid.NewString(),
+			WxOpenID:  &openid,
+			Nickname:  nickname,
+			CreatedAt: time.Now(),
 		}
 		if createErr := h.userStore.Create(user); createErr != nil {
 			errorResponse(c, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to create user")

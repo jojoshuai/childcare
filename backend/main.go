@@ -24,7 +24,7 @@ func main() {
 	}
 	defer database.Close()
 
-	if err := db.RunMigrations(database, "file://db/migrations"); err != nil {
+	if err := db.RunMigrations(database, "file://db/migrations", cfg.MYSQDSN); err != nil {
 		log.Fatalf("migrate: %v", err)
 	}
 

@@ -1,0 +1,6 @@
+.superpowers/
+.idea/
+backend/.env
+miniprogram/node_modules/
+miniprogram/miniprogram_npm/
+miniprogram/project.private.config.json
