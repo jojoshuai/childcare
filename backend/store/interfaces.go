@@ -42,3 +42,30 @@ type InviteStore interface {
 	GetByCode(code string) (*model.InviteCode, error)
 	MarkUsed(id string) error
 }
+
+// SleepStore defines the interface for sleep record persistence operations.
+type SleepStore interface {
+	Create(r *model.SleepRecord) error
+	GetByChildID(childID string) ([]*model.SleepRecord, error)
+	GetByID(id string) (*model.SleepRecord, error)
+	Update(r *model.SleepRecord) error
+	Delete(id string) error
+}
+
+// DietStore defines the interface for diet record persistence operations.
+type DietStore interface {
+	Create(r *model.DietRecord) error
+	GetByChildID(childID string) ([]*model.DietRecord, error)
+	GetByID(id string) (*model.DietRecord, error)
+	Update(r *model.DietRecord) error
+	Delete(id string) error
+}
+
+// SupplementStore defines the interface for supplement record persistence operations.
+type SupplementStore interface {
+	Create(r *model.SupplementRecord) error
+	GetByChildID(childID string) ([]*model.SupplementRecord, error)
+	GetByID(id string) (*model.SupplementRecord, error)
+	Update(r *model.SupplementRecord) error
+	Delete(id string) error
+}

@@ -4,12 +4,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io/fs"
 	"strings"
 
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4"
 	migratemysql "github.com/golang-migrate/migrate/v4/database/mysql"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 )
 
 // Open opens a MySQL connection using dsn, pings the server to confirm
@@ -31,13 +31,15 @@ func Open(dsn string) (*sql.DB, error) {
 	return db, nil
 }
 
-// RunMigrations applies all pending "up" migrations found at migrationsPath.
-// A migrationsPath of "file://path/to/migrations" is expected.
-// ErrNoChange is treated as success.
-//
-// dsn is used to open a separate connection with multiStatements=true, which
-// is required by golang-migrate to execute multi-statement SQL files.
-func RunMigrations(db *sql.DB, migrationsPath, dsn string) error {
+// RunMigrations applies all pending "up" migrations from the provided fs.FS.
+// The fs.FS should contain the migration SQL files at its root.
+// dsn is used to open a separate connection with multiStatements=true.
+func RunMigrations(db *sql.DB, migrations fs.FS, dsn string) error {
+	source, err := iofs.New(migrations, ".")
+	if err != nil {
+		return fmt.Errorf("db.RunMigrations: create source: %w", err)
+	}
+
 	// golang-migrate requires multiStatements=true to run files with multiple statements.
 	multiDSN := dsn
 	if strings.Contains(dsn, "?") {
@@ -56,7 +58,7 @@ func RunMigrations(db *sql.DB, migrationsPath, dsn string) error {
 		return fmt.Errorf("db.RunMigrations: create driver: %w", err)
 	}
 
-	m, err := migrate.NewWithDatabaseInstance(migrationsPath, "mysql", driver)
+	m, err := migrate.NewWithInstance("iofs", source, "mysql", driver)
 	if err != nil {
 		return fmt.Errorf("db.RunMigrations: new migrate: %w", err)
 	}

@@ -22,14 +22,21 @@ import { getWHOStandards } from '../api/who'
 import type { WHOPoint } from '../api/who'
 import MeasurementDrawer from '../components/MeasurementDrawer'
 import GrowthChart from '../components/GrowthChart'
+import SleepRecords from '../components/SleepRecords'
+import DietRecords from '../components/DietRecords'
+import SupplementRecords from '../components/SupplementRecords'
 import dayjs from 'dayjs'
 
 type MeasureType = 'weight' | 'height' | 'head_circumference'
+type TabKey = MeasureType | 'sleep' | 'diet' | 'supplement'
 
-const tabs: { key: MeasureType; label: string }[] = [
+const tabs: { key: TabKey; label: string }[] = [
   { key: 'weight', label: '体重' },
   { key: 'height', label: '身高' },
   { key: 'head_circumference', label: '头围' },
+  { key: 'sleep', label: '睡眠' },
+  { key: 'diet', label: '饮食' },
+  { key: 'supplement', label: '补剂' },
 ]
 
 function ageLabel(birthDate: string): string {
@@ -45,7 +52,7 @@ function ageLabel(birthDate: string): string {
 export default function ChildDetail() {
   const { id } = useParams<{ id: string }>()
   const [child, setChild] = useState<Child | null>(null)
-  const [type, setType] = useState<MeasureType>('weight')
+  const [activeTab, setActiveTab] = useState<TabKey>('weight')
   const [measurements, setMeasurements] = useState<Measurement[]>([])
   const [whoData, setWhoData] = useState<WHOPoint[]>([])
   const [loading, setLoading] = useState(true)
@@ -63,8 +70,8 @@ export default function ChildDetail() {
     setLoading(true)
     try {
       const [ms, who] = await Promise.all([
-        listMeasurements(id, type),
-        getWHOStandards(child.gender, type),
+        listMeasurements(id, activeTab as MeasureType),
+        getWHOStandards(child.gender, activeTab as MeasureType),
       ])
       setMeasurements(ms)
       setWhoData(who)
@@ -73,11 +80,13 @@ export default function ChildDetail() {
     } finally {
       setLoading(false)
     }
-  }, [id, child, type])
+  }, [id, child, activeTab])
 
   useEffect(() => {
-    if (child) loadMeasurements()
-  }, [child, type, loadMeasurements])
+    if (child && ['weight', 'height', 'head_circumference'].includes(activeTab)) {
+      loadMeasurements()
+    }
+  }, [child, activeTab, loadMeasurements])
 
   const handleDelete = async (mid: string) => {
     try {
@@ -87,6 +96,8 @@ export default function ChildDetail() {
       message.error(err.response?.data?.message ?? '删除失败')
     }
   }
+
+  const isMeasureTab = ['weight', 'height', 'head_circumference'].includes(activeTab)
 
   const columns = [
     {
@@ -99,7 +110,7 @@ export default function ChildDetail() {
       title: '数值',
       dataIndex: 'value',
       key: 'value',
-      render: (v: number) => `${v} ${type === 'weight' ? 'kg' : 'cm'}`,
+      render: (v: number) => `${v} ${activeTab === 'weight' ? 'kg' : 'cm'}`,
     },
     {
       title: '操作',
@@ -137,15 +148,15 @@ export default function ChildDetail() {
       </p>
 
       <Tabs
-        activeKey={type}
-        onChange={k => setType(k as MeasureType)}
+        activeKey={activeTab}
+        onChange={k => setActiveTab(k as TabKey)}
         items={tabs.map(t => ({ key: t.key, label: t.label }))}
         style={{ marginBottom: 16 }}
       />
 
-      {loading ? (
+      {loading && isMeasureTab ? (
         <Skeleton active paragraph={{ rows: 8 }} />
-      ) : (
+      ) : isMeasureTab ? (
         <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
           {/* 左：图表 */}
           <div
@@ -161,7 +172,7 @@ export default function ChildDetail() {
               measurements={measurements}
               whoData={whoData}
               birthDate={child.birth_date}
-              type={type}
+              type={activeTab as MeasureType}
             />
           </div>
 
@@ -215,12 +226,26 @@ export default function ChildDetail() {
             />
           </div>
         </div>
+      ) : (
+        /* 睡眠/饮食/补剂 tabs */
+        <div
+          style={{
+            background: '#fff',
+            borderRadius: 8,
+            padding: 16,
+            border: '1px solid #d1fae5',
+          }}
+        >
+          {activeTab === 'sleep' && <SleepRecords childId={id!} />}
+          {activeTab === 'diet' && <DietRecords childId={id!} />}
+          {activeTab === 'supplement' && <SupplementRecords childId={id!} />}
+        </div>
       )}
 
       <MeasurementDrawer
         open={drawerOpen}
         childId={id!}
-        type={type}
+        type={activeTab as MeasureType}
         editing={editing}
         onClose={() => setDrawerOpen(false)}
         onSaved={loadMeasurements}
