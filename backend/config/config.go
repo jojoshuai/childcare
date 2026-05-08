@@ -14,6 +14,10 @@ type Config struct {
 	WXAppID          string
 	WXSecret         string
 	Port             string
+	FeishuAppID      string
+	FeishuAppSecret  string
+	DeepSeekAPIKey   string
+	FeishuFamilyID   string
 }
 
 // Load reads environment variables and returns a populated Config.
@@ -51,6 +55,11 @@ func Load() (*Config, error) {
 	if cfg.Port == "" {
 		cfg.Port = "8080"
 	}
+
+	cfg.FeishuAppID = os.Getenv("FEISHU_APP_ID")
+	cfg.FeishuAppSecret = os.Getenv("FEISHU_APP_SECRET")
+	cfg.DeepSeekAPIKey = os.Getenv("DEEPSEEK_API_KEY")
+	cfg.FeishuFamilyID = os.Getenv("FEISHU_FAMILY_ID")
 
 	return cfg, nil
 }

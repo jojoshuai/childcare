@@ -7,6 +7,7 @@ import (
 
 	"childcare-backend/config"
 	"childcare-backend/db"
+	"childcare-backend/feishu"
 	"childcare-backend/handler"
 	"childcare-backend/middleware"
 	"childcare-backend/store"
@@ -129,6 +130,21 @@ func main() {
 
 	addr := ":" + cfg.Port
 	log.Printf("listening on %s", addr)
+
+	// Start Feishu bot in background if configured.
+	if cfg.FeishuAppID != "" && cfg.FeishuAppSecret != "" && cfg.DeepSeekAPIKey != "" {
+		bot := feishu.NewBot(
+			cfg.FeishuAppID, cfg.FeishuAppSecret, cfg.DeepSeekAPIKey, cfg.FeishuFamilyID,
+			childStore, sleepStore, dietStore, suppStore, measureStore,
+		)
+		go func() {
+			log.Printf("starting Feishu bot...")
+			if err := bot.StartWS(); err != nil {
+				log.Printf("feishu bot error: %v", err)
+			}
+		}()
+	}
+
 	if err := r.Run(addr); err != nil {
 		log.Fatalf("run: %v", err)
 	}
