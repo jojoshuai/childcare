@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"time"
 
-	"childcare-backend/middleware"
 	"childcare-backend/model"
 	"childcare-backend/store"
 
@@ -12,20 +11,17 @@ import (
 	"github.com/google/uuid"
 )
 
-// ChildHandler handles child-related routes.
 type ChildHandler struct {
 	childStore store.ChildStore
 }
 
-// NewChildHandler constructs a ChildHandler.
 func NewChildHandler(cs store.ChildStore) *ChildHandler {
 	return &ChildHandler{childStore: cs}
 }
 
 // List handles GET /api/children.
 func (h *ChildHandler) List(c *gin.Context) {
-	familyID := middleware.GetFamilyID(c)
-	children, err := h.childStore.GetByFamilyID(familyID)
+	children, err := h.childStore.GetAll()
 	if err != nil {
 		errorResponse(c, http.StatusInternalServerError, "INTERNAL_ERROR", "获取孩子列表失败")
 		return
@@ -58,7 +54,6 @@ func (h *ChildHandler) Create(c *gin.Context) {
 
 	child := &model.Child{
 		ID:        uuid.NewString(),
-		FamilyID:  middleware.GetFamilyID(c),
 		Name:      req.Name,
 		Gender:    req.Gender,
 		BirthDate: birthDate,
@@ -77,10 +72,6 @@ func (h *ChildHandler) Update(c *gin.Context) {
 	child, err := h.childStore.GetByID(id)
 	if err != nil || child == nil {
 		errorResponse(c, http.StatusNotFound, "NOT_FOUND", "孩子不存在")
-		return
-	}
-	if child.FamilyID != middleware.GetFamilyID(c) {
-		errorResponse(c, http.StatusForbidden, "FORBIDDEN", "无权操作")
 		return
 	}
 
@@ -106,20 +97,12 @@ func (h *ChildHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, child)
 }
 
-// Delete handles DELETE /api/children/:id (owner only).
+// Delete handles DELETE /api/children/:id.
 func (h *ChildHandler) Delete(c *gin.Context) {
-	if middleware.GetRole(c) != "owner" {
-		errorResponse(c, http.StatusForbidden, "FORBIDDEN", "仅家庭创建者可删除孩子")
-		return
-	}
 	id := c.Param("id")
 	child, err := h.childStore.GetByID(id)
 	if err != nil || child == nil {
 		errorResponse(c, http.StatusNotFound, "NOT_FOUND", "孩子不存在")
-		return
-	}
-	if child.FamilyID != middleware.GetFamilyID(c) {
-		errorResponse(c, http.StatusForbidden, "FORBIDDEN", "无权操作")
 		return
 	}
 	if err := h.childStore.Delete(id); err != nil {

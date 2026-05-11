@@ -8,6 +8,8 @@ export interface DietRecord {
   food_type: string
   amount_level: number
   record_time: string
+  meal_group_id: string | null
+  meal_type: string
   notes: string | null
   created_by: string
   created_at: string
@@ -28,6 +30,8 @@ export const createDiet = (
     food_type: string
     amount_level: number
     record_time: string
+    meal_group_id?: string | null
+    meal_type?: string
     notes?: string | null
   },
 ) =>
@@ -41,6 +45,8 @@ export const updateDiet = (
     food_type: string
     amount_level: number
     record_time: string
+    meal_group_id?: string | null
+    meal_type?: string
     notes?: string | null
   },
 ) =>

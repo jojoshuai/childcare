@@ -4,7 +4,7 @@ import api from './axios'
 export interface Measurement {
   id: string
   child_id: string
-  type: 'weight' | 'height' | 'head_circumference'
+  type: 'weight' | 'height'
   value: number
   measured_at: string
   note: string | null

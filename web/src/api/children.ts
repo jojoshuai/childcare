@@ -3,7 +3,6 @@ import api from './axios'
 
 export interface Child {
   id: string
-  family_id: string
   name: string
   gender: 'male' | 'female'
   birth_date: string

@@ -27,7 +27,6 @@ func main() {
 	}
 	defer database.Close()
 
-	// Use embedded migrations via iofs.
 	migrations, err := fs.Sub(migrationsFS, "db/migrations")
 	if err != nil {
 		log.Fatalf("migrations fs: %v", err)
@@ -38,21 +37,18 @@ func main() {
 
 	// stores
 	userStore    := store.NewUserStore(database)
-	familyStore  := store.NewFamilyStore(database)
 	childStore   := store.NewChildStore(database)
 	measureStore := store.NewMeasurementStore(database)
-	inviteStore  := store.NewInviteStore(database)
 	sleepStore   := store.NewSleepStore(database)
 	dietStore    := store.NewDietStore(database)
 	suppStore    := store.NewSupplementStore(database)
 
 	// handlers
-	authH     := handler.NewAuthHandler(userStore, familyStore, cfg)
-	familyH   := handler.NewFamilyHandler(familyStore, userStore, inviteStore)
-	childH    := handler.NewChildHandler(childStore)
-	measureH  := handler.NewMeasurementHandler(measureStore, childStore)
-	sleepH    := handler.NewSleepHandler(sleepStore, childStore)
-	dietH     := handler.NewDietHandler(dietStore, childStore)
+	authH := handler.NewAuthHandler(userStore, cfg)
+	childH := handler.NewChildHandler(childStore)
+	measureH := handler.NewMeasurementHandler(measureStore, childStore)
+	sleepH := handler.NewSleepHandler(sleepStore, childStore)
+	dietH := handler.NewDietHandler(dietStore, childStore)
 	supplementH := handler.NewSupplementHandler(suppStore, childStore)
 
 	r := gin.Default()
@@ -70,12 +66,7 @@ func main() {
 		protected := api.Group("")
 		protected.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 		{
-			protected.GET("/family",         familyH.GetFamily)
-			protected.POST("/family/invite", familyH.GenerateInvite)
-			protected.POST("/family/join",   familyH.JoinFamily)
-
 			withFamily := protected.Group("")
-			withFamily.Use(middleware.RequireFamily())
 			{
 				withFamily.GET("/children",                      childH.List)
 				withFamily.POST("/children",                     childH.Create)
@@ -111,12 +102,10 @@ func main() {
 
 	// Serve embedded frontend when built with -tags embed.
 	if FrontendFS != nil {
-		// Serve static assets (JS, CSS, favicon, etc.)
 		r.StaticFS("/assets", FrontendFS)
 		r.GET("/favicon.svg", gin.WrapH(http.FileServer(FrontendFS)))
 		r.GET("/icons.svg", gin.WrapH(http.FileServer(FrontendFS)))
 
-		// SPA fallback: all other routes serve index.html
 		r.NoRoute(func(c *gin.Context) {
 			indexFile, err := FrontendFS.Open("/index.html")
 			if err != nil {
@@ -134,7 +123,7 @@ func main() {
 	// Start Feishu bot in background if configured.
 	if cfg.FeishuAppID != "" && cfg.FeishuAppSecret != "" && cfg.DeepSeekAPIKey != "" {
 		bot := feishu.NewBot(
-			cfg.FeishuAppID, cfg.FeishuAppSecret, cfg.DeepSeekAPIKey, cfg.FeishuFamilyID,
+			cfg.FeishuAppID, cfg.FeishuAppSecret, cfg.DeepSeekAPIKey,
 			childStore, sleepStore, dietStore, suppStore, measureStore,
 		)
 		go func() {

@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>儿童成长记录 — redesign v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-50: #f0fdf4;
+    --green-100: #dcfce7;
+    --green-200: #bbf7d0;
+    --green-300: #86efac;
+    --green-400: #4ade80;
+    --green-500: #22c55e;
+    --green-600: #16a34a;
+    --green-700: #15803d;
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-300: #cbd5e1;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1e293b;
+    --slate-900: #0f172a;
+    --amber-50: #fffbeb;
+    --amber-400: #fbbf24;
+    --amber-500: #f59e0b;
+    --rose-50: #fff1f2;
+    --rose-400: #fb7185;
+    --blue-50: #eff6ff;
+    --blue-400: #60a5fa;
+    --violet-50: #f5f3ff;
+    --violet-400: #a78bfa;
+    --violet-500: #8b5cf6;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.06);
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.08);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,.1);
+    --nav-h: 52px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Plus Jakarta Sans', 'Noto Sans SC', sans-serif;
+    background: #e2e8f0;
+    color: var(--slate-800);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Mockup wrapper ── */
+  .mockup-page {
+    max-width: 1120px;
+    margin: 40px auto;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    background: var(--slate-50);
+  }
+  .mockup-label {
+    background: var(--slate-900);
+    color: #fff;
+    padding: 10px 24px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mockup-label .url {
+    font-weight: 400;
+    color: var(--slate-400);
+    margin-left: auto;
+    font-size: 11px;
+  }
+
+  /* ── Top Nav ── */
+  .topnav {
+    height: var(--nav-h);
+    background: #fff;
+    border-bottom: 1px solid var(--slate-200);
+    display: flex;
+    align-items: center;
+    padding: 0 28px;
+  }
+  .nav-logo {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--green-700);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .nav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .nav-avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--green-200);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; color: var(--green-700);
+  }
+  .nav-logout {
+    font-size: 12px; color: var(--slate-400); cursor: pointer;
+    padding: 4px 8px; border-radius: 6px; transition: all .15s;
+  }
+  .nav-logout:hover { background: var(--slate-100); color: var(--slate-600); }
+
+  /* ── Content ── */
+  .content { padding: 28px; background: var(--slate-50); }
+
+  /* ── Child switcher ── */
+  .child-switcher {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .child-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 16px 6px 6px;
+    border-radius: 24px;
+    background: #fff;
+    border: 1.5px solid var(--slate-200);
+    cursor: pointer;
+    transition: all .15s;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--slate-500);
+  }
+  .child-pill:hover { border-color: var(--green-300); }
+  .child-pill.active {
+    border-color: var(--green-400);
+    background: var(--green-50);
+    color: var(--green-700);
+    font-weight: 600;
+    box-shadow: 0 0 0 3px rgba(34,197,94,.1);
+  }
+  .child-pill-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--green-100);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .child-pill-info { display: flex; flex-direction: column; line-height: 1.3; }
+  .child-pill-name { font-size: 13px; font-weight: 600; }
+  .child-pill-age { font-size: 11px; font-weight: 400; color: var(--slate-400); }
+  .child-pill.active .child-pill-age { color: var(--green-600); opacity: .75; }
+  .child-pill.add {
+    border-style: dashed;
+    border-color: var(--slate-300);
+    background: transparent;
+    gap: 4px;
+    padding: 6px 12px;
+  }
+  .child-pill.add:hover { border-color: var(--green-400); background: var(--green-50); }
+  .child-pill.add span { font-size: 18px; line-height: 1; color: var(--slate-400); }
+
+  /* ── Child info bar ── */
+  .child-info-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+    padding: 16px 20px;
+    background: #fff;
+    border-radius: var(--radius);
+    border: 1px solid var(--slate-100);
+    box-shadow: var(--shadow-sm);
+  }
+  .child-big-avatar {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    background: var(--green-100);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+  .child-big-info { flex: 1; }
+  .child-big-name { font-size: 20px; font-weight: 800; color: var(--slate-900); letter-spacing: -.02em; }
+  .child-big-meta { font-size: 13px; color: var(--slate-400); margin-top: 2px; }
+  .child-age-badges { display: flex; gap: 8px; flex-shrink: 0; }
+  .age-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--green-50);
+    color: var(--green-700);
+  }
+
+  /* ── Stat cards ── */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--slate-100);
+  }
+  .stat-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .stat-icon-circle {
+    width: 32px; height: 32px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .stat-icon-circle.sleep { background: var(--violet-50); }
+  .stat-icon-circle.diet { background: var(--green-100); }
+  .stat-icon-circle.supp { background: var(--amber-50); }
+  .stat-icon-circle.growth { background: var(--blue-50); }
+  .stat-trend {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .stat-trend.up { background: var(--green-50); color: var(--green-600); }
+  .stat-trend.neutral { background: var(--slate-100); color: var(--slate-500); }
+  .stat-num {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--slate-900);
+    letter-spacing: -.02em;
+  }
+  .stat-desc { font-size: 12px; color: var(--slate-400); margin-top: 2px; }
+
+  /* ── Section header ── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .section-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--slate-800);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+  .section-actions { display: flex; gap: 8px; align-items: center; }
+
+  /* ── Buttons ── */
+  .btn {
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all .15s;
+    font-family: inherit;
+  }
+  .btn-primary { background: var(--green-500); color: #fff; }
+  .btn-primary:hover { background: var(--green-600); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--slate-500);
+    padding: 6px 8px;
+  }
+  .btn-ghost:hover { background: var(--slate-100); color: var(--slate-700); }
+
+  /* ── Cards ── */
+  .card {
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--slate-100);
+    margin-bottom: 20px;
+  }
+
+  /* ── Fake bar chart ── */
+  .fake-bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 120px;
+  }
+  .fake-bar-col { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .fake-bar { border-radius: 2px; transition: opacity .15s; }
+  .fake-bar:hover { opacity: .85; }
+  .fake-bar-labels {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+    font-size: 10px;
+    color: var(--slate-400);
+    justify-content: space-between;
+  }
+
+  /* ── Heatmap ── */
+  .heatmap {
+    display: grid;
+    grid-template-columns: auto repeat(7, 1fr);
+    gap: 3px;
+    font-size: 11px;
+  }
+  .heatmap-label {
+    display: flex;
+    align-items: center;
+    padding-right: 8px;
+    color: var(--slate-500);
+    font-weight: 500;
+    font-size: 11px;
+  }
+  .heatmap-cell {
+    aspect-ratio: 1;
+    border-radius: 3px;
+    background: var(--slate-100);
+    min-width: 0;
+  }
+  .heatmap-cell.l1 { background: var(--green-200); }
+  .heatmap-cell.l2 { background: var(--green-400); }
+  .heatmap-cell.l3 { background: var(--green-600); }
+  .heatmap-day {
+    font-size: 10px;
+    color: var(--slate-400);
+    text-align: center;
+    padding-bottom: 4px;
+  }
+
+  /* ── Grid helpers ── */
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+  .mb-20 { margin-bottom: 20px; }
+
+  /* ── Line chart SVG ── */
+  .line-chart { width: 100%; height: 200px; }
+  .line-chart svg { width: 100%; height: 100%; }
+
+  /* ── Record rows ── */
+  .record-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--slate-50);
+  }
+  .record-row:last-child { border-bottom: none; }
+  .record-main { display: flex; align-items: center; gap: 10px; }
+  .record-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .record-text { font-size: 13px; font-weight: 500; color: var(--slate-700); }
+  .record-sub { font-size: 11px; color: var(--slate-400); margin-top: 1px; }
+  .tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 600;
+    display: inline-block;
+  }
+  .tag-green { background: var(--green-50); color: var(--green-700); }
+  .tag-violet { background: var(--violet-50); color: var(--violet-500); }
+  .tag-amber { background: var(--amber-50); color: var(--amber-500); }
+  .tag-blue { background: var(--blue-50); color: var(--blue-400); }
+  .tag-rose { background: var(--rose-50); color: var(--rose-400); }
+
+  /* ── Meal group ── */
+  .meal-group { margin-bottom: 14px; }
+  .meal-group:last-child { margin-bottom: 0; }
+  .meal-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 0; margin-bottom: 2px;
+  }
+  .meal-header-time { font-size: 11px; color: var(--slate-400); }
+  .meal-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--slate-50);
+  }
+  .meal-item:last-child { border-bottom: none; }
+  .meal-item-name { font-size: 13px; font-weight: 500; color: var(--slate-700); }
+
+  /* ── Date picker mock ── */
+  .date-picker {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 10px;
+    border: 1px solid var(--slate-200);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--slate-600);
+    background: #fff;
+  }
+
+  /* ── Supp heatmap variant ── */
+  .supp-heat-row {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin-bottom: 3px;
+  }
+  .supp-heat-row:last-child { margin-bottom: 0; }
+  .supp-heat-label { width: 60px; font-size: 11px; color: var(--slate-500); text-align: right; flex-shrink: 0; }
+  .supp-heat-cell {
+    flex: 1;
+    aspect-ratio: 1;
+    border-radius: 3px;
+    background: var(--slate-100);
+    max-height: 28px;
+  }
+  .supp-heat-cell.l1 { background: var(--green-200); }
+  .supp-heat-cell.l2 { background: var(--green-400); }
+  .supp-heat-cell.l3 { background: var(--green-600); }
+  .supp-day-labels {
+    display: flex; gap: 3px; margin-left: 60px; margin-bottom: 6px;
+  }
+  .supp-day-labels span { flex: 1; text-align: center; font-size: 10px; color: var(--slate-400); }
+
+  /* ── Summary badge ── */
+  .summary-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .summary-badge.green { background: var(--green-50); color: var(--green-700); }
+  .summary-badge.amber { background: var(--amber-50); color: var(--amber-500); }
+
+  /* ── Growth two-col ── */
+  .growth-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  .scroll-mini { max-height: 200px; overflow-y: auto; }
+  .scroll-mini::-webkit-scrollbar { width: 3px; }
+  .scroll-mini::-webkit-scrollbar-thumb { background: var(--slate-200); border-radius: 3px; }
+
+  .mini-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .mini-table th {
+    text-align: left; padding: 6px 10px;
+    background: var(--slate-50); color: var(--slate-500);
+    font-weight: 600; font-size: 11px;
+    border-bottom: 1px solid var(--slate-200);
+  }
+  .mini-table td { padding: 8px 10px; border-bottom: 1px solid var(--slate-50); color: var(--slate-700); }
+  .mini-table .val { font-weight: 700; color: var(--green-700); }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.3);
+    backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+    z-index: 1000;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: #fff; border-radius: var(--radius-lg);
+    width: 400px; max-width: 90vw;
+    box-shadow: var(--shadow-lg);
+    animation: slideUp .2s cubic-bezier(.4,0,.2,1);
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .modal-head {
+    padding: 16px 20px; border-bottom: 1px solid var(--slate-100);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-title { font-size: 15px; font-weight: 700; }
+  .modal-close {
+    width: 26px; height: 26px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 16px; color: var(--slate-400);
+    border: none; background: transparent;
+  }
+  .modal-close:hover { background: var(--slate-100); }
+  .modal-body { padding: 20px; }
+  .form-group { margin-bottom: 14px; }
+  .form-group:last-child { margin-bottom: 0; }
+  .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--slate-600); margin-bottom: 5px; }
+  .form-input, .form-select {
+    width: 100%; padding: 7px 11px;
+    border: 1px solid var(--slate-200); border-radius: var(--radius-sm);
+    font-size: 13px; color: var(--slate-800); font-family: inherit;
+    background: #fff; outline: none;
+  }
+  .form-input:focus { border-color: var(--green-400); box-shadow: 0 0 0 3px rgba(34,197,94,.1); }
+  .form-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+    cursor: pointer;
+  }
+  .form-submit {
+    width: 100%; padding: 9px; border: none; border-radius: var(--radius-sm);
+    background: var(--green-500); color: #fff;
+    font-size: 13px; font-weight: 600; font-family: inherit;
+    cursor: pointer; margin-top: 6px;
+  }
+  .form-submit:hover { background: var(--green-600); }
+
+  /* ── Streak ── */
+  .streak {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 11px; font-weight: 600; color: var(--amber-500);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .stat-row { grid-template-columns: repeat(2, 1fr); }
+    .grid-3, .grid-2, .grid-2-1, .growth-row { grid-template-columns: 1fr; }
+    .content { padding: 20px 16px; }
+  }
+
+  /* ── Expandable detail ── */
+  .detail-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    padding: 4px 0;
+    user-select: none;
+  }
+  .detail-header-row:hover .detail-toggle { color: var(--green-600); }
+  .detail-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--slate-800);
+    display: flex;
+    align-items: center;
+  }
+  .detail-toggle {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--slate-400);
+    transition: color .15s;
+  }
+  .detail-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .35s cubic-bezier(.4,0,.2,1), opacity .25s;
+    opacity: 0;
+  }
+  .detail-panel.open {
+    max-height: 2000px;
+    opacity: 1;
+    padding-top: 14px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- MAIN PAGE: Dashboard + Board merged into one overview   -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="mockup-page">
+  <div class="mockup-label">
+    <span>首页总览（Dashboard + Board 合并）</span>
+    <span class="url">/</span>
+  </div>
+
+  <!-- Nav -->
+  <nav class="topnav">
+    <div class="nav-logo">🌱 儿童成长</div>
+    <div class="nav-right">
+      <div class="nav-avatar">Z</div>
+      <span class="nav-logout">退出</span>
+    </div>
+  </nav>
+
+  <div class="content">
+    <!-- Child switcher (pill style) -->
+    <div class="child-switcher">
+      <div class="child-pill active">
+        <div class="child-pill-avatar">👦</div>
+        <div class="child-pill-info">
+          <div class="child-pill-name">张小宝</div>
+          <div class="child-pill-age">2岁3个月</div>
+        </div>
+      </div>
+      <div class="child-pill">
+        <div class="child-pill-avatar" style="background:var(--rose-50);">👧</div>
+        <div class="child-pill-info">
+          <div class="child-pill-name">张小米</div>
+          <div class="child-pill-age">8个月</div>
+        </div>
+      </div>
+      <div class="child-pill add" id="addBtn">
+        <span>+</span>
+      </div>
+    </div>
+
+    <!-- Child info bar -->
+    <div class="child-info-bar">
+      <div class="child-big-avatar">👦</div>
+      <div class="child-big-info">
+        <div class="child-big-name">张小宝</div>
+        <div class="child-big-meta">男孩 · 2024年2月15日出生</div>
+      </div>
+      <div class="child-age-badges">
+        <span class="age-badge">2岁3个月</span>
+      </div>
+    </div>
+
+    <!-- Stat cards row -->
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon-circle sleep">🌙</div>
+          <span class="stat-trend up">+30m</span>
+        </div>
+        <div class="stat-num">10h30m</div>
+        <div class="stat-desc">今日睡眠</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon-circle diet">🥗</div>
+          <span class="stat-trend up">+1</span>
+        </div>
+        <div class="stat-num">4/5</div>
+        <div class="stat-desc">今日饮食种类</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon-circle supp">💊</div>
+          <span class="stat-trend up">🔥 5天</span>
+        </div>
+        <div class="stat-num">3</div>
+        <div class="stat-desc">今日补剂</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon-circle growth">📏</div>
+          <span class="stat-trend neutral">P50+</span>
+        </div>
+        <div class="stat-num">12.5<small style="font-size:14px;font-weight:500;color:var(--slate-400)">kg</small></div>
+        <div class="stat-desc">最新体重</div>
+      </div>
+    </div>
+
+    <!-- Row: Sleep + Diet + Supplement charts -->
+    <div class="section-header">
+      <div class="section-label">
+        <span class="section-dot" style="background:var(--green-500)"></span>
+        近 7 天记录
+      </div>
+    </div>
+
+    <div class="grid-3 mb-20">
+      <!-- Sleep -->
+      <div class="card" style="margin-bottom:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <span style="font-size:13px;font-weight:700;color:var(--slate-800);">睡眠</span>
+          <button class="btn btn-ghost" style="font-size:11px;">添加 →</button>
+        </div>
+        <div class="fake-bar-chart">
+          <div class="fake-bar-col"><div class="fake-bar" style="height:80%;background:var(--violet-500);"></div></div>
+          <div class="fake-bar-col"><div class="fake-bar" style="height:65%;background:var(--violet-500);"></div></div>
+          <div class="fake-bar-col"><div class="fake-bar" style="height:85%;background:var(--violet-500);"></div></div>
+          <div class="fake-bar-col"><div class="fake-bar" style="height:75%;background:var(--violet-500);"></div></div>
+          <div class="fake-bar-col"><div class="fake-bar" style="height:90%;background:var(--violet-500);"></div></div>
+          <div class="fake-bar-col"><div class="fake-bar" style="height:60%;background:var(--violet-500);"></div></div>
+          <div class="fake-bar-col"><div class="fake-bar" style="height:78%;background:var(--violet-500);"></div></div>
+        </div>
+        <div class="fake-bar-labels">
+          <span>周一</span><span>周二</span><span>周三</span><span>周四</span><span>周五</span><span>周六</span><span style="color:var(--violet-500);font-weight:600;">今天</span>
+        </div>
+      </div>
+
+      <!-- Diet heatmap -->
+      <div class="card" style="margin-bottom:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <span style="font-size:13px;font-weight:700;color:var(--slate-800);">饮食营养</span>
+          <span class="summary-badge green">今日 4/5 类</span>
+        </div>
+        <div class="heatmap">
+          <div></div>
+          <div class="heatmap-day">一</div><div class="heatmap-day">二</div><div class="heatmap-day">三</div><div class="heatmap-day">四</div><div class="heatmap-day">五</div><div class="heatmap-day">六</div><div class="heatmap-day" style="color:var(--green-600);font-weight:600;">日</div>
+          <div class="heatmap-label">主食</div>
+          <div class="heatmap-cell l3"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l3"></div>
+          <div class="heatmap-label">蔬菜</div>
+          <div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l2"></div>
+          <div class="heatmap-label">水果</div>
+          <div class="heatmap-cell l2"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div>
+          <div class="heatmap-label">肉蛋</div>
+          <div class="heatmap-cell l3"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l3"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div>
+          <div class="heatmap-label">奶</div>
+          <div class="heatmap-cell l2"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l3"></div>
+          <div class="heatmap-label">零食</div>
+          <div class="heatmap-cell l1"></div><div class="heatmap-cell"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell"></div><div class="heatmap-cell l1"></div><div class="heatmap-cell l2"></div><div class="heatmap-cell l1"></div>
+        </div>
+      </div>
+
+      <!-- Supplement heatmap -->
+      <div class="card" style="margin-bottom:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <span style="font-size:13px;font-weight:700;color:var(--slate-800);">补剂</span>
+          <span class="streak">🔥 连续5天</span>
+        </div>
+        <div class="supp-day-labels">
+          <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span style="color:var(--green-600);font-weight:600;">日</span>
+        </div>
+        <div class="supp-heat-row">
+          <div class="supp-heat-label">维D</div>
+          <div class="supp-heat-cell l3"></div><div class="supp-heat-cell l3"></div><div class="supp-heat-cell l3"></div><div class="supp-heat-cell l3"></div><div class="supp-heat-cell l3"></div><div class="supp-heat-cell l3"></div><div class="supp-heat-cell l3"></div>
+        </div>
+        <div class="supp-heat-row">
+          <div class="supp-heat-label">钙</div>
+          <div class="supp-heat-cell l2"></div><div class="supp-heat-cell l2"></div><div class="supp-heat-cell"></div><div class="supp-heat-cell l2"></div><div class="supp-heat-cell l2"></div><div class="supp-heat-cell l2"></div><div class="supp-heat-cell l2"></div>
+        </div>
+        <div class="supp-heat-row">
+          <div class="supp-heat-label">DHA</div>
+          <div class="supp-heat-cell l3"></div><div class="supp-heat-cell l3"></div><div class="supp-heat-cell l3"></div><div class="supp-heat-cell l3"></div><div class="supp-heat-cell l3"></div><div class="supp-heat-cell"></div><div class="supp-heat-cell l3"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Growth curves -->
+    <div class="section-header" style="margin-top:8px;">
+      <div class="section-label">
+        <span class="section-dot" style="background:var(--blue-400)"></span>
+        生长曲线
+      </div>
+    </div>
+
+    <div class="growth-row mb-20">
+      <!-- Height chart + table -->
+      <div class="card" style="margin-bottom:0;">
+        <div style="font-size:13px;font-weight:700;color:var(--slate-800);margin-bottom:16px;">身高</div>
+        <div class="line-chart">
+          <svg viewBox="0 0 500 180" fill="none">
+            <line x1="50" y1="15" x2="480" y2="15" stroke="#f1f5f9"/>
+            <line x1="50" y1="52" x2="480" y2="52" stroke="#f1f5f9"/>
+            <line x1="50" y1="90" x2="480" y2="90" stroke="#f1f5f9"/>
+            <line x1="50" y1="128" x2="480" y2="128" stroke="#f1f5f9"/>
+            <line x1="50" y1="165" x2="480" y2="165" stroke="#e2e8f0"/>
+            <!-- WHO references -->
+            <path d="M60,30 Q160,45 260,55 Q360,60 460,65" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4 3" fill="none"/>
+            <path d="M60,55 Q160,70 260,80 Q360,86 460,92" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 3" fill="none"/>
+            <path d="M60,85 Q160,100 260,110 Q360,116 460,122" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4 3" fill="none"/>
+            <!-- Child data -->
+            <path d="M60,60 Q160,72 260,82 Q360,88 460,95" stroke="#22c55e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <circle cx="60" cy="60" r="4" fill="#22c55e"/>
+            <circle cx="160" cy="72" r="4" fill="#22c55e"/>
+            <circle cx="260" cy="82" r="4" fill="#22c55e"/>
+            <circle cx="360" cy="88" r="4" fill="#22c55e"/>
+            <circle cx="460" cy="95" r="4" fill="#22c55e"/>
+            <text x="465" y="65" fill="#9ca3af" font-size="8">P97</text>
+            <text x="465" y="92" fill="#9ca3af" font-size="8">P50</text>
+            <text x="465" y="124" fill="#9ca3af" font-size="8">P3</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Weight chart + table -->
+      <div class="card" style="margin-bottom:0;">
+        <div style="font-size:13px;font-weight:700;color:var(--slate-800);margin-bottom:16px;">体重</div>
+        <div class="line-chart">
+          <svg viewBox="0 0 500 180" fill="none">
+            <line x1="50" y1="15" x2="480" y2="15" stroke="#f1f5f9"/>
+            <line x1="50" y1="52" x2="480" y2="52" stroke="#f1f5f9"/>
+            <line x1="50" y1="90" x2="480" y2="90" stroke="#f1f5f9"/>
+            <line x1="50" y1="128" x2="480" y2="128" stroke="#f1f5f9"/>
+            <line x1="50" y1="165" x2="480" y2="165" stroke="#e2e8f0"/>
+            <path d="M60,25 Q160,40 260,50 Q360,56 460,60" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4 3" fill="none"/>
+            <path d="M60,55 Q160,68 260,78 Q360,84 460,90" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 3" fill="none"/>
+            <path d="M60,90 Q160,100 260,110 Q360,116 460,120" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4 3" fill="none"/>
+            <path d="M60,60 Q160,70 260,80 Q360,85 460,90" stroke="#22c55e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <circle cx="60" cy="60" r="4" fill="#22c55e"/>
+            <circle cx="160" cy="70" r="4" fill="#22c55e"/>
+            <circle cx="260" cy="80" r="4" fill="#22c55e"/>
+            <circle cx="360" cy="85" r="4" fill="#22c55e"/>
+            <circle cx="460" cy="90" r="4" fill="#22c55e"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Expandable detail sections -->
+    <div class="section-header" style="margin-top:8px;">
+      <div class="section-label">
+        <span class="section-dot" style="background:var(--green-500)"></span>
+        详细记录
+      </div>
+    </div>
+
+    <!-- Diet detail -->
+    <div class="card">
+      <div class="detail-header-row" onclick="toggleDetail('diet-detail')">
+        <div class="detail-section-title">
+          <span style="color:var(--green-500);margin-right:4px;">●</span>
+          饮食记录
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="detail-toggle" id="diet-detail-toggle">查看全部 →</span>
+        </div>
+      </div>
+      <div class="detail-panel" id="diet-detail">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div class="date-picker">📅 2026-05-09</div>
+          <button class="btn btn-primary" style="font-size:11px;">+ 添加饮食</button>
+        </div>
+        <div class="meal-group">
+          <div class="meal-header">
+            <span class="tag tag-green">早餐</span>
+            <span class="meal-header-time">07:30</span>
+          </div>
+          <div class="meal-item"><span class="meal-item-name">小米粥</span><span class="tag tag-green">主食 · 🍽️</span></div>
+          <div class="meal-item"><span class="meal-item-name">蒸鸡蛋</span><span class="tag tag-blue">肉蛋 · 🍽️</span></div>
+          <div class="meal-item"><span class="meal-item-name">苹果泥</span><span class="tag tag-rose">水果 · 🥄</span></div>
+        </div>
+        <div class="meal-group">
+          <div class="meal-header">
+            <span class="tag tag-green">午餐</span>
+            <span class="meal-header-time">12:00</span>
+          </div>
+          <div class="meal-item"><span class="meal-item-name">米饭</span><span class="tag tag-green">主食 · 🍽️</span></div>
+          <div class="meal-item"><span class="meal-item-name">清蒸鲈鱼</span><span class="tag tag-blue">肉蛋 · 🍴</span></div>
+          <div class="meal-item"><span class="meal-item-name">炒西兰花</span><span class="tag tag-green">蔬菜 · 🍽️</span></div>
+          <div class="meal-item"><span class="meal-item-name">酸奶</span><span class="tag tag-blue">奶 · 🍽️</span></div>
+        </div>
+        <div class="meal-group">
+          <div class="meal-header">
+            <span class="tag tag-amber">加餐</span>
+            <span class="meal-header-time">15:30</span>
+          </div>
+          <div class="meal-item"><span class="meal-item-name">香蕉</span><span class="tag tag-rose">水果 · 🍽️</span></div>
+        </div>
+        <!-- Previous day record -->
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--slate-100);">
+          <div style="font-size:12px;color:var(--slate-400);margin-bottom:10px;font-weight:600;">2026-05-08</div>
+          <div class="meal-group">
+            <div class="meal-header">
+              <span class="tag tag-green">早餐</span>
+              <span class="meal-header-time">07:15</span>
+            </div>
+            <div class="meal-item"><span class="meal-item-name">燕麦粥</span><span class="tag tag-green">主食 · 🍽️</span></div>
+            <div class="meal-item"><span class="meal-item-name">水煮蛋</span><span class="tag tag-blue">肉蛋 · 🍽️</span></div>
+          </div>
+          <div class="meal-group">
+            <div class="meal-header">
+              <span class="tag tag-green">午餐</span>
+              <span class="meal-header-time">11:45</span>
+            </div>
+            <div class="meal-item"><span class="meal-item-name">面条</span><span class="tag tag-green">主食 · 🍽️</span></div>
+            <div class="meal-item"><span class="meal-item-name">番茄炒蛋</span><span class="tag tag-blue">肉蛋 · 🍽️</span></div>
+            <div class="meal-item"><span class="meal-item-name">小油菜</span><span class="tag tag-green">蔬菜 · 🍽️</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sleep + Supplement detail side by side -->
+    <div class="grid-2">
+      <!-- Sleep detail -->
+      <div class="card" style="margin-bottom:0;">
+        <div class="detail-header-row" onclick="toggleDetail('sleep-detail')">
+          <div class="detail-section-title">
+            <span style="color:var(--violet-500);margin-right:4px;">●</span>
+            睡眠记录
+          </div>
+          <span class="detail-toggle" id="sleep-detail-toggle">查看全部 →</span>
+        </div>
+        <div class="detail-panel" id="sleep-detail">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div class="date-picker">📅 2026-05-09</div>
+            <button class="btn btn-primary" style="font-size:11px;">+ 添加</button>
+          </div>
+          <div class="record-row">
+            <div class="record-main">
+              <div class="record-dot" style="background:var(--violet-500);"></div>
+              <div>
+                <div class="record-text">21:30 → 07:00</div>
+                <div class="record-sub">9小时30分钟</div>
+              </div>
+            </div>
+            <span class="tag tag-violet">整夜安睡</span>
+          </div>
+          <div class="record-row">
+            <div class="record-main">
+              <div class="record-dot" style="background:var(--violet-400);"></div>
+              <div>
+                <div class="record-text">13:00 → 14:30</div>
+                <div class="record-sub">1小时30分钟</div>
+              </div>
+            </div>
+            <span class="tag tag-amber">醒来 1次</span>
+          </div>
+          <!-- Previous day -->
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--slate-100);">
+            <div style="font-size:12px;color:var(--slate-400);margin-bottom:8px;font-weight:600;">2026-05-08</div>
+            <div class="record-row">
+              <div class="record-main">
+                <div class="record-dot" style="background:var(--violet-500);"></div>
+                <div>
+                  <div class="record-text">21:00 → 06:30</div>
+                  <div class="record-sub">9小时30分钟</div>
+                </div>
+              </div>
+              <span class="tag tag-amber">醒来 2次</span>
+            </div>
+            <div class="record-row">
+              <div class="record-main">
+                <div class="record-dot" style="background:var(--violet-400);"></div>
+                <div>
+                  <div class="record-text">13:30 → 15:00</div>
+                  <div class="record-sub">1小时30分钟</div>
+                </div>
+              </div>
+              <span class="tag tag-violet">整夜安睡</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Supplement detail -->
+      <div class="card" style="margin-bottom:0;">
+        <div class="detail-header-row" onclick="toggleDetail('supp-detail')">
+          <div class="detail-section-title">
+            <span style="color:var(--amber-500);margin-right:4px;">●</span>
+            补剂记录
+          </div>
+          <span class="detail-toggle" id="supp-detail-toggle">查看全部 →</span>
+        </div>
+        <div class="detail-panel" id="supp-detail">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div class="date-picker">📅 2026-05-09</div>
+            <button class="btn btn-primary" style="font-size:11px;">+ 添加</button>
+          </div>
+          <div class="record-row">
+            <div class="record-main">
+              <div class="record-dot" style="background:var(--amber-500);"></div>
+              <div>
+                <div class="record-text">维生素D3</div>
+                <div class="record-sub">08:00 · 1粒</div>
+              </div>
+            </div>
+            <span class="tag tag-amber">连续 7 天</span>
+          </div>
+          <div class="record-row">
+            <div class="record-main">
+              <div class="record-dot" style="background:var(--amber-500);"></div>
+              <div>
+                <div class="record-text">钙片</div>
+                <div class="record-sub">08:00 · 半片</div>
+              </div>
+            </div>
+            <span class="tag tag-amber">连续 4 天</span>
+          </div>
+          <div class="record-row">
+            <div class="record-main">
+              <div class="record-dot" style="background:var(--amber-500);"></div>
+              <div>
+                <div class="record-text">DHA</div>
+                <div class="record-sub">12:00 · 1粒</div>
+              </div>
+            </div>
+            <span class="tag tag-amber">连续 6 天</span>
+          </div>
+          <!-- Previous day -->
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--slate-100);">
+            <div style="font-size:12px;color:var(--slate-400);margin-bottom:8px;font-weight:600;">2026-05-08</div>
+            <div class="record-row">
+              <div class="record-main">
+                <div class="record-dot" style="background:var(--amber-500);"></div>
+                <div>
+                  <div class="record-text">维生素D3</div>
+                  <div class="record-sub">08:00 · 1粒</div>
+                </div>
+              </div>
+              <span class="tag tag-amber">连续 6 天</span>
+            </div>
+            <div class="record-row">
+              <div class="record-main">
+                <div class="record-dot" style="background:var(--amber-500);"></div>
+                <div>
+                  <div class="record-text">DHA</div>
+                  <div class="record-sub">12:00 · 1粒</div>
+                </div>
+              </div>
+              <span class="tag tag-amber">连续 5 天</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal: Add child -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-title">添加孩子</div>
+      <button class="modal-close" id="modalClose">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">姓名</label>
+        <input class="form-input" placeholder="请输入孩子姓名" value="张小贝">
+      </div>
+      <div class="form-group">
+        <label class="form-label">性别</label>
+        <select class="form-select">
+          <option>男孩 👦</option>
+          <option>女孩 👧</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">出生日期</label>
+        <input class="form-input" type="text" value="2026-01-15">
+      </div>
+      <button class="form-submit">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('addBtn').addEventListener('click', () => {
+    document.getElementById('addModal').classList.add('show');
+  });
+  document.getElementById('modalClose').addEventListener('click', () => {
+    document.getElementById('addModal').classList.remove('show');
+  });
+  document.getElementById('addModal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('show');
+  });
+  function toggleDetail(id) {
+    const el = document.getElementById(id);
+    const tog = document.getElementById(id + '-toggle');
+    if (el.classList.contains('open')) {
+      el.classList.remove('open');
+      tog.textContent = '查看全部 →';
+    } else {
+      el.classList.add('open');
+      tog.textContent = '收起 ←';
+    }
+  }
+</script>
+
+</body>
+</html>

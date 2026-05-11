@@ -10,7 +10,7 @@ import type { AuthUser } from '../api/auth'
 interface AuthContextType {
   user: AuthUser | null
   token: string | null
-  login: (token: string, refreshToken: string, user: AuthUser) => void
+  login: (token: string, user: AuthUser) => void
   logout: () => void
 }
 
@@ -29,9 +29,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.getItem('token'),
   )
 
-  const login = (token: string, refreshToken: string, user: AuthUser) => {
+  const login = (token: string, user: AuthUser) => {
     localStorage.setItem('token', token)
-    localStorage.setItem('refresh_token', refreshToken)
     localStorage.setItem('user', JSON.stringify(user))
     setToken(token)
     setUser(user)

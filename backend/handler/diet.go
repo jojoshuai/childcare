@@ -29,10 +29,6 @@ func (h *DietHandler) checkChild(c *gin.Context, childID string) (*model.Child, 
 		errorResponse(c, http.StatusNotFound, "NOT_FOUND", "孩子不存在")
 		return nil, false
 	}
-	if child.FamilyID != middleware.GetFamilyID(c) {
-		errorResponse(c, http.StatusForbidden, "FORBIDDEN", "无权操作")
-		return nil, false
-	}
 	return child, true
 }
 
@@ -72,6 +68,8 @@ type dietRequest struct {
 	FoodType    string  `json:"food_type"    binding:"required,oneof=staple vegetable fruit protein dairy snack"`
 	AmountLevel int     `json:"amount_level" binding:"required,min=1,max=3"`
 	RecordTime  string  `json:"record_time"  binding:"required"`
+	MealGroupID *string `json:"meal_group_id"`
+	MealType    string  `json:"meal_type"    binding:"omitempty,oneof=breakfast lunch dinner snack"`
 	Notes       *string `json:"notes"`
 }
 
@@ -101,6 +99,8 @@ func (h *DietHandler) Create(c *gin.Context) {
 		FoodType:    req.FoodType,
 		AmountLevel: req.AmountLevel,
 		RecordTime:  recordTime,
+		MealGroupID: req.MealGroupID,
+		MealType:    req.MealType,
 		Notes:       req.Notes,
 		CreatedBy:   middleware.GetUserID(c),
 		CreatedAt:   time.Now(),
@@ -146,6 +146,8 @@ func (h *DietHandler) Update(c *gin.Context) {
 	r.FoodType = req.FoodType
 	r.AmountLevel = req.AmountLevel
 	r.RecordTime = recordTime
+	r.MealGroupID = req.MealGroupID
+	r.MealType = req.MealType
 	r.Notes = req.Notes
 
 	if err := h.dietStore.Update(r); err != nil {

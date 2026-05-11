@@ -29,13 +29,13 @@ function calcAgeMonths(birthDate: string, measuredAt: string): number {
 const typeUnit: Record<string, string> = {
   weight: 'kg',
   height: 'cm',
-  head_circumference: 'cm',
 }
 
 interface ChartPoint {
-  month: number
+  date: string
+  displayDate: string
   value?: number
-  date?: string
+  monthAge?: number
   p3?: number
   p50?: number
   p97?: number
@@ -56,31 +56,44 @@ export default function GrowthChart({
 
   const showWHO = maxAgeMonths < 61
 
+  // Use actual date as X-axis for fine granularity
   const chartData: ChartPoint[] = useMemo(() => {
-    const byMonth: Record<number, ChartPoint> = {}
-
-    if (showWHO) {
-      whoData.forEach(pt => {
-        byMonth[pt.month] = { month: pt.month, p3: pt.p3, p50: pt.p50, p97: pt.p97 }
-      })
-    }
+    const byDate: Record<string, ChartPoint> = {}
 
     measurements.forEach(m => {
-      const month = calcAgeMonths(birthDate, m.measured_at)
-      byMonth[month] = {
-        ...(byMonth[month] ?? { month }),
+      const date = dayjs(m.measured_at).format('YYYY-MM-DD')
+      const monthAge = calcAgeMonths(birthDate, m.measured_at)
+      byDate[date] = {
+        ...(byDate[date] ?? { date, displayDate: dayjs(m.measured_at).format('MM/DD'), monthAge }),
         value: m.value,
-        date: m.measured_at,
       }
     })
 
-    return Object.values(byMonth).sort((a, b) => a.month - b.month)
+    // Add WHO reference points for nearby months
+    if (showWHO) {
+      whoData.forEach(pt => {
+        // Find the date closest to this month age
+        const targetDate = dayjs(birthDate).add(pt.month, 'month').format('YYYY-MM-DD')
+        if (!byDate[targetDate]) {
+          byDate[targetDate] = {
+            date: targetDate,
+            displayDate: `${pt.month}m`,
+            p3: pt.p3,
+            p50: pt.p50,
+            p97: pt.p97,
+          }
+        }
+      })
+    }
+
+    return Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date))
   }, [measurements, whoData, birthDate, showWHO])
 
   const unit = typeUnit[type] ?? ''
 
-  const customTooltip = ({ active, payload, label }: any) => {
+  const customTooltip = ({ active, payload }: any) => {
     if (!active || !payload?.length) return null
+    const point = payload[0].payload as ChartPoint
     return (
       <div
         style={{
@@ -92,7 +105,10 @@ export default function GrowthChart({
         }}
       >
         <div style={{ color: '#6b7280', marginBottom: 4 }}>
-          月龄 {label} 个月
+          {point.displayDate}
+          {point.monthAge !== undefined && (
+            <span style={{ marginLeft: 8 }}>月龄 {point.monthAge} 个月</span>
+          )}
         </div>
         {payload.map((p: any) => (
           <div key={p.name} style={{ color: p.color }}>
@@ -109,11 +125,9 @@ export default function GrowthChart({
         <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#d1fae5" />
           <XAxis
-            dataKey="month"
-            type="number"
-            domain={['dataMin', 'dataMax']}
+            dataKey="displayDate"
             label={{
-              value: '月龄',
+              value: '日期',
               position: 'insideBottomRight',
               offset: -8,
               fontSize: 11,

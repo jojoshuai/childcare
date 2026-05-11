@@ -30,11 +30,10 @@ type Bot struct {
 	dietStore    store.DietStore
 	suppStore    store.SupplementStore
 	measureStore store.MeasurementStore
-	familyID     string
 }
 
 // NewBot creates a new Feishu bot instance.
-func NewBot(appID, appSecret, deepseekAPIKey, familyID string,
+func NewBot(appID, appSecret, deepseekAPIKey string,
 	childStore store.ChildStore,
 	sleepStore store.SleepStore, dietStore store.DietStore,
 	suppStore store.SupplementStore, measureStore store.MeasurementStore,
@@ -49,7 +48,6 @@ func NewBot(appID, appSecret, deepseekAPIKey, familyID string,
 		dietStore:    dietStore,
 		suppStore:    suppStore,
 		measureStore: measureStore,
-		familyID:     familyID,
 	}
 }
 
@@ -62,6 +60,10 @@ func (b *Bot) StartWS() error {
 		}).
 		OnP2ChatAccessEventBotP2pChatEnteredV1(func(ctx context.Context, event *larkim.P2ChatAccessEventBotP2pChatEnteredV1) error {
 			log.Printf("[DEBUG][feishu] bot_p2p_chat_entered_v1 received, ignoring")
+			return nil
+		}).
+		OnP2MessageReadV1(func(ctx context.Context, event *larkim.P2MessageReadV1) error {
+			// Message read event, no action needed
 			return nil
 		})
 
@@ -82,6 +84,8 @@ func (b *Bot) StartWS() error {
 // ParsedRecord represents a single parsed record from LLM.
 type ParsedRecord struct {
 	Category       string   `json:"category"`
+	MealGroupID    *string  `json:"meal_group_id"`
+	MealType       *string  `json:"meal_type"`
 	StartTime      *string  `json:"start_time"`
 	EndTime        *string  `json:"end_time"`
 	WokeUp         *bool    `json:"woke_up"`
@@ -99,8 +103,16 @@ type ParsedRecord struct {
 
 // ParsedResult represents the full LLM output.
 type ParsedResult struct {
+	Intent  string         `json:"intent"`
 	Records []ParsedRecord `json:"records"`
 	Error   *string        `json:"error"`
+	Query   *ParsedQuery   `json:"query"`
+}
+
+// ParsedQuery represents a query intent from LLM.
+type ParsedQuery struct {
+	Category  string `json:"category"`
+	TimeRange string `json:"time_range"`
 }
 
 func (b *Bot) handleMessage(ctx context.Context, event *larkim.P2MessageReceiveV1) error {
@@ -159,6 +171,17 @@ func (b *Bot) processMessage(userText string) string {
 
 	log.Printf("[DEBUG][feishu] LLM parsed result: %+v", parsed)
 
+	// Query intent
+	if parsed.Intent == "query" && parsed.Query != nil {
+		result, err := b.ExecuteQuery(parsed.Query.Category, parsed.Query.TimeRange)
+		if err != nil {
+			log.Printf("[DEBUG][feishu] query failed: %v", err)
+			return fmt.Sprintf("❌ 查询失败: %s", err.Error())
+		}
+		return result.Text
+	}
+
+	// Record intent
 	if len(parsed.Records) == 0 {
 		if parsed.Error != nil {
 			return fmt.Sprintf("🤔 %s，请换种说法试试", *parsed.Error)
@@ -218,12 +241,12 @@ func (b *Bot) callLLM(userText string) (*ParsedResult, error) {
 }
 
 func (b *Bot) getFirstChildID() (string, error) {
-	children, err := b.childStore.GetByFamilyID(b.familyID)
+	children, err := b.childStore.GetAll()
 	if err != nil {
 		return "", err
 	}
 	if len(children) == 0 {
-		return "", fmt.Errorf("该家庭下没有孩子")
+		return "", fmt.Errorf("没有孩子")
 	}
 	return children[0].ID, nil
 }
@@ -253,14 +276,14 @@ func (b *Bot) saveSleep(r ParsedRecord) (string, error) {
 		return "", fmt.Errorf("获取孩子信息: %w", err)
 	}
 
-	startTime, err := time.Parse(time.RFC3339, *r.StartTime)
+	startTime, err := parseTime(*r.StartTime)
 	if err != nil {
 		return "", fmt.Errorf("时间格式错误: %s", *r.StartTime)
 	}
 
 	var endTime *time.Time
 	if r.EndTime != nil {
-		t, err := time.Parse(time.RFC3339, *r.EndTime)
+		t, err := parseTime(*r.EndTime)
 		if err != nil {
 			return "", fmt.Errorf("结束时间格式错误: %s", *r.EndTime)
 		}
@@ -323,7 +346,7 @@ func (b *Bot) saveDiet(r ParsedRecord) (string, error) {
 
 	recordTime := time.Now()
 	if r.RecordTime != nil {
-		t, err := time.Parse(time.RFC3339, *r.RecordTime)
+		t, err := parseTime(*r.RecordTime)
 		if err == nil {
 			recordTime = t
 		}
@@ -334,6 +357,11 @@ func (b *Bot) saveDiet(r ParsedRecord) (string, error) {
 		foodType = *r.FoodType
 	}
 
+	mealType := ""
+	if r.MealType != nil {
+		mealType = *r.MealType
+	}
+
 	rec := &model.DietRecord{
 		ID:          uuid.NewString(),
 		ChildID:     childID,
@@ -341,6 +369,8 @@ func (b *Bot) saveDiet(r ParsedRecord) (string, error) {
 		FoodType:    foodType,
 		AmountLevel: amountLevel,
 		RecordTime:  recordTime,
+		MealGroupID: r.MealGroupID,
+		MealType:    mealType,
 		CreatedBy:   "feishu-bot",
 		CreatedAt:   time.Now(),
 	}
@@ -365,7 +395,7 @@ func (b *Bot) saveSupplement(r ParsedRecord) (string, error) {
 
 	takenAt := time.Now()
 	if r.TakenAt != nil {
-		t, err := time.Parse(time.RFC3339, *r.TakenAt)
+		t, err := parseTime(*r.TakenAt)
 		if err == nil {
 			takenAt = t
 		}
@@ -399,7 +429,7 @@ func (b *Bot) saveMeasurement(r ParsedRecord) (string, error) {
 
 	measuredAt := time.Now()
 	if r.MeasuredAt != nil {
-		t, err := time.Parse(time.RFC3339, *r.MeasuredAt)
+		t, err := parseTime(*r.MeasuredAt)
 		if err == nil {
 			measuredAt = t
 		}
@@ -425,11 +455,26 @@ func (b *Bot) saveMeasurement(r ParsedRecord) (string, error) {
 	}
 
 	typeLabels := map[string]string{
-		"weight":             "体重",
-		"height":             "身高",
-		"head_circumference": "头围",
+		"weight": "体重",
+		"height": "身高",
 	}
 	return fmt.Sprintf("测量：%s %.1f%s", typeLabels[*r.Type], *r.Value, unit), nil
+}
+
+func parseTime(s string) (time.Time, error) {
+	// Try RFC3339 first (with timezone)
+	if t, err := time.Parse(time.RFC3339, s); err == nil {
+		return t, nil
+	}
+	// Try without timezone (e.g. "2026-05-08T11:00:00")
+	if t, err := time.Parse("2006-01-02T15:04:05", s); err == nil {
+		return t, nil
+	}
+	// Try date only (e.g. "2026-05-08")
+	if t, err := time.Parse("2006-01-02", s); err == nil {
+		return t, nil
+	}
+	return time.Time{}, fmt.Errorf("无法解析时间: %s", s)
 }
 
 func formatTime(t time.Time) string {

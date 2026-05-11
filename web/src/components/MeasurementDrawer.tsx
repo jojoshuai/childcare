@@ -19,7 +19,7 @@ import dayjs from 'dayjs'
 interface Props {
   open: boolean
   childId: string
-  type: 'weight' | 'height' | 'head_circumference'
+  type: 'weight' | 'height'
   editing?: Measurement | null
   onClose: () => void
   onSaved: () => void
@@ -28,13 +28,11 @@ interface Props {
 const typeLabel: Record<string, string> = {
   weight: '体重 (kg)',
   height: '身高 (cm)',
-  head_circumference: '头围 (cm)',
 }
 
 const typeRange: Record<string, [number, number]> = {
   weight: [0.5, 200],
   height: [20, 250],
-  head_circumference: [20, 80],
 }
 
 export default function MeasurementDrawer({

@@ -19,8 +19,8 @@ export default function Login() {
     setLoading(true)
     try {
       const data = await login(values)
-      authLogin(data.token, data.refresh_token, data.user)
-      navigate('/dashboard')
+      authLogin(data.token, data.user)
+      navigate('/', { replace: true })
     } catch (err: any) {
       message.error(err.response?.data?.message ?? '登录失败')
     } finally {
@@ -31,14 +31,13 @@ export default function Login() {
   const handleRegister = async (values: {
     username: string
     password: string
-    family_name: string
     nickname: string
   }) => {
     setLoading(true)
     try {
       const data = await register(values)
-      authLogin(data.token, data.refresh_token, data.user)
-      navigate('/dashboard')
+      authLogin(data.token, data.user)
+      navigate('/', { replace: true })
     } catch (err: any) {
       message.error(err.response?.data?.message ?? '注册失败')
     } finally {
@@ -115,13 +114,6 @@ export default function Login() {
                     rules={[{ required: true, min: 6 }]}
                   >
                     <Input.Password />
-                  </Form.Item>
-                  <Form.Item
-                    name="family_name"
-                    label="家庭名称"
-                    rules={[{ required: true }]}
-                  >
-                    <Input placeholder="如：王家" />
                   </Form.Item>
                   <Form.Item
                     name="nickname"

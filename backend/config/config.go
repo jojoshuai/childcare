@@ -17,12 +17,10 @@ type Config struct {
 	FeishuAppID      string
 	FeishuAppSecret  string
 	DeepSeekAPIKey   string
-	FeishuFamilyID   string
 }
 
 // Load reads environment variables and returns a populated Config.
 // Required vars: MYSQL_DSN, JWT_SECRET, JWT_REFRESH_SECRET.
-// Optional vars: WX_APPID, WX_SECRET (warn if absent), PORT (default "8080").
 func Load() (*Config, error) {
 	cfg := &Config{}
 
@@ -59,7 +57,6 @@ func Load() (*Config, error) {
 	cfg.FeishuAppID = os.Getenv("FEISHU_APP_ID")
 	cfg.FeishuAppSecret = os.Getenv("FEISHU_APP_SECRET")
 	cfg.DeepSeekAPIKey = os.Getenv("DEEPSEEK_API_KEY")
-	cfg.FeishuFamilyID = os.Getenv("FEISHU_FAMILY_ID")
 
 	return cfg, nil
 }

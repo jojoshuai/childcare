@@ -29,10 +29,6 @@ func (h *SleepHandler) checkChild(c *gin.Context, childID string) (*model.Child,
 		errorResponse(c, http.StatusNotFound, "NOT_FOUND", "孩子不存在")
 		return nil, false
 	}
-	if child.FamilyID != middleware.GetFamilyID(c) {
-		errorResponse(c, http.StatusForbidden, "FORBIDDEN", "无权操作")
-		return nil, false
-	}
 	return child, true
 }
 

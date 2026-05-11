@@ -3,9 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import AppLayout from './components/AppLayout'
 import Login from './pages/Login'
-import Dashboard from './pages/Dashboard'
-import ChildDetail from './pages/ChildDetail'
-import Family from './pages/Family'
+import Home from './pages/Home'
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { token } = useAuth()
@@ -23,10 +21,7 @@ const AppRoutes = () => (
         </ProtectedRoute>
       }
     >
-      <Route index element={<Navigate to="/dashboard" replace />} />
-      <Route path="dashboard" element={<Dashboard />} />
-      <Route path="children/:id" element={<ChildDetail />} />
-      <Route path="family" element={<Family />} />
+      <Route index element={<Home />} />
     </Route>
   </Routes>
 )

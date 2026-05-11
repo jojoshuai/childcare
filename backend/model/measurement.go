@@ -5,7 +5,7 @@ import "time"
 type Measurement struct {
 	ID         string    `json:"id"`
 	ChildID    string    `json:"child_id"`
-	Type       string    `json:"type"` // "weight", "height", "head_circumference"
+	Type       string    `json:"type"` // "weight", "height"
 	Value      float64   `json:"value"`
 	MeasuredAt time.Time `json:"measured_at"`
 	Note       *string   `json:"note"`

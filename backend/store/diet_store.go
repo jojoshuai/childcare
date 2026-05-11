@@ -19,16 +19,16 @@ func NewDietStore(db *sql.DB) DietStore {
 
 func (s *MySQLDietStore) Create(r *model.DietRecord) error {
 	_, err := s.db.Exec(
-		`INSERT INTO diet_records (id, child_id, food_name, food_type, amount_level, record_time, notes, created_by, created_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		r.ID, r.ChildID, r.FoodName, r.FoodType, r.AmountLevel, r.RecordTime, r.Notes, r.CreatedBy, r.CreatedAt,
+		`INSERT INTO diet_records (id, child_id, food_name, food_type, amount_level, record_time, meal_group_id, meal_type, notes, created_by, created_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		r.ID, r.ChildID, r.FoodName, r.FoodType, r.AmountLevel, r.RecordTime, r.MealGroupID, r.MealType, r.Notes, r.CreatedBy, r.CreatedAt,
 	)
 	return err
 }
 
 func (s *MySQLDietStore) GetByChildID(childID string) ([]*model.DietRecord, error) {
 	rows, err := s.db.Query(
-		`SELECT id, child_id, food_name, food_type, amount_level, record_time, notes, created_by, created_at
+		`SELECT id, child_id, food_name, food_type, amount_level, record_time, meal_group_id, meal_type, notes, created_by, created_at
 		 FROM diet_records WHERE child_id = ? ORDER BY record_time DESC`,
 		childID,
 	)
@@ -40,15 +40,21 @@ func (s *MySQLDietStore) GetByChildID(childID string) ([]*model.DietRecord, erro
 	var records []*model.DietRecord
 	for rows.Next() {
 		var r model.DietRecord
-		var notes sql.NullString
+		var notes, mealGroupID, mealType sql.NullString
 		if err := rows.Scan(
 			&r.ID, &r.ChildID, &r.FoodName, &r.FoodType, &r.AmountLevel,
-			&r.RecordTime, &notes, &r.CreatedBy, &r.CreatedAt,
+			&r.RecordTime, &mealGroupID, &mealType, &notes, &r.CreatedBy, &r.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
 		if notes.Valid {
 			r.Notes = &notes.String
+		}
+		if mealGroupID.Valid {
+			r.MealGroupID = &mealGroupID.String
+		}
+		if mealType.Valid {
+			r.MealType = mealType.String
 		}
 		records = append(records, &r)
 	}
@@ -60,15 +66,15 @@ func (s *MySQLDietStore) GetByChildID(childID string) ([]*model.DietRecord, erro
 
 func (s *MySQLDietStore) GetByID(id string) (*model.DietRecord, error) {
 	row := s.db.QueryRow(
-		`SELECT id, child_id, food_name, food_type, amount_level, record_time, notes, created_by, created_at
+		`SELECT id, child_id, food_name, food_type, amount_level, record_time, meal_group_id, meal_type, notes, created_by, created_at
 		 FROM diet_records WHERE id = ?`,
 		id,
 	)
 	var r model.DietRecord
-	var notes sql.NullString
+	var notes, mealGroupID, mealType sql.NullString
 	err := row.Scan(
 		&r.ID, &r.ChildID, &r.FoodName, &r.FoodType, &r.AmountLevel,
-		&r.RecordTime, &notes, &r.CreatedBy, &r.CreatedAt,
+		&r.RecordTime, &mealGroupID, &mealType, &notes, &r.CreatedBy, &r.CreatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -79,13 +85,19 @@ func (s *MySQLDietStore) GetByID(id string) (*model.DietRecord, error) {
 	if notes.Valid {
 		r.Notes = &notes.String
 	}
+	if mealGroupID.Valid {
+		r.MealGroupID = &mealGroupID.String
+	}
+	if mealType.Valid {
+		r.MealType = mealType.String
+	}
 	return &r, nil
 }
 
 func (s *MySQLDietStore) Update(r *model.DietRecord) error {
 	_, err := s.db.Exec(
-		`UPDATE diet_records SET food_name = ?, food_type = ?, amount_level = ?, record_time = ?, notes = ? WHERE id = ?`,
-		r.FoodName, r.FoodType, r.AmountLevel, r.RecordTime, r.Notes, r.ID,
+		`UPDATE diet_records SET food_name = ?, food_type = ?, amount_level = ?, record_time = ?, meal_group_id = ?, meal_type = ?, notes = ? WHERE id = ?`,
+		r.FoodName, r.FoodType, r.AmountLevel, r.RecordTime, r.MealGroupID, r.MealType, r.Notes, r.ID,
 	)
 	return err
 }

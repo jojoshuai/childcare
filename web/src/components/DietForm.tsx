@@ -25,6 +25,13 @@ const foodTypeOptions = [
   { value: 'snack', label: '零食' },
 ]
 
+const mealTypeOptions = [
+  { value: 'breakfast', label: '早餐' },
+  { value: 'lunch', label: '午餐' },
+  { value: 'dinner', label: '晚餐' },
+  { value: 'snack', label: '加餐' },
+]
+
 interface Props {
   open: boolean
   childId: string
@@ -37,17 +44,28 @@ interface DietItem {
   food_type: string
   amount_level: number
   record_time: string
+  meal_type: string
+}
+
+function recommendMealType(time: string): string {
+  const h = dayjs(time).hour()
+  if (h >= 6 && h < 10) return 'breakfast'
+  if (h >= 10 && h < 14) return 'lunch'
+  if (h >= 14 && h < 18) return 'snack'
+  return 'dinner'
 }
 
 export default function DietForm({ open, childId, onClose, onSaved }: Props) {
+  const now = dayjs().format()
+  const initialMealType = recommendMealType(now)
   const [items, setItems] = useState<DietItem[]>([
-    { food_name: '', food_type: 'staple', amount_level: 2, record_time: dayjs().format() },
+    { food_name: '', food_type: 'staple', amount_level: 2, record_time: now, meal_type: initialMealType },
   ])
 
   useEffect(() => {
     if (open && items.length === 0) {
       setItems([
-        { food_name: '', food_type: 'staple', amount_level: 2, record_time: dayjs().format() },
+        { food_name: '', food_type: 'staple', amount_level: 2, record_time: dayjs().format(), meal_type: recommendMealType(dayjs().format()) },
       ])
     }
   }, [open])
@@ -63,7 +81,7 @@ export default function DietForm({ open, childId, onClose, onSaved }: Props) {
   const addItem = () => {
     setItems(prev => [
       ...prev,
-      { food_name: '', food_type: 'staple', amount_level: 2, record_time: dayjs().format() },
+      { food_name: '', food_type: 'staple', amount_level: 2, record_time: dayjs().format(), meal_type: recommendMealType(dayjs().format()) },
     ])
   }
 
@@ -78,6 +96,7 @@ export default function DietForm({ open, childId, onClose, onSaved }: Props) {
       message.warning('请至少填写一种食物')
       return
     }
+    const mealGroupId = crypto.randomUUID()
     try {
       await Promise.all(
         validItems.map(item =>
@@ -86,6 +105,8 @@ export default function DietForm({ open, childId, onClose, onSaved }: Props) {
             food_type: item.food_type,
             amount_level: item.amount_level,
             record_time: item.record_time,
+            meal_group_id: mealGroupId,
+            meal_type: item.meal_type,
           }),
         ),
       )
@@ -155,10 +176,19 @@ export default function DietForm({ open, childId, onClose, onSaved }: Props) {
                 <DatePicker
                   showTime
                   value={dayjs(item.record_time)}
-                  onChange={v =>
-                    updateItem(index, 'record_time', v?.format() ?? dayjs().format())
-                  }
+                  onChange={v => {
+                    const newTime = v?.format() ?? dayjs().format()
+                    updateItem(index, 'record_time', newTime)
+                    updateItem(index, 'meal_type', recommendMealType(newTime))
+                  }}
                   style={{ width: '100%' }}
+                />
+              </Form.Item>
+              <Form.Item label="餐次">
+                <Select
+                  value={item.meal_type}
+                  onChange={v => updateItem(index, 'meal_type', v)}
+                  options={mealTypeOptions}
                 />
               </Form.Item>
             </Form>

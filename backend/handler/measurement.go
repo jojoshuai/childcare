@@ -24,9 +24,8 @@ func NewMeasurementHandler(ms store.MeasurementStore, cs store.ChildStore) *Meas
 }
 
 var measureRanges = map[string][2]float64{
-	"weight":             {0.5, 200},
-	"height":             {20, 250},
-	"head_circumference": {20, 80},
+	"weight": {0.5, 200},
+	"height": {20, 250},
 }
 
 func validateMeasureValue(mType string, value float64) bool {
@@ -42,10 +41,6 @@ func (h *MeasurementHandler) checkChild(c *gin.Context, childID string) (*model.
 	child, err := h.childStore.GetByID(childID)
 	if err != nil || child == nil {
 		errorResponse(c, http.StatusNotFound, "NOT_FOUND", "孩子不存在")
-		return nil, false
-	}
-	if child.FamilyID != middleware.GetFamilyID(c) {
-		errorResponse(c, http.StatusForbidden, "FORBIDDEN", "无权操作")
 		return nil, false
 	}
 	return child, true
@@ -75,7 +70,7 @@ func (h *MeasurementHandler) List(c *gin.Context) {
 }
 
 type measureRequest struct {
-	Type       string  `json:"type"        binding:"required,oneof=weight height head_circumference"`
+	Type       string  `json:"type"        binding:"required,oneof=weight height"`
 	Value      float64 `json:"value"       binding:"required"`
 	MeasuredAt string  `json:"measured_at" binding:"required"` // YYYY-MM-DD
 	Note       *string `json:"note"`

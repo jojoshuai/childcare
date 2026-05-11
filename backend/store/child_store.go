@@ -7,30 +7,26 @@ import (
 	"childcare-backend/model"
 )
 
-// MySQLChildStore is a MySQL-backed implementation of ChildStore.
 type MySQLChildStore struct {
 	db *sql.DB
 }
 
-// NewChildStore returns a ChildStore backed by the provided *sql.DB.
 func NewChildStore(db *sql.DB) ChildStore {
 	return &MySQLChildStore{db: db}
 }
 
 func (s *MySQLChildStore) Create(c *model.Child) error {
 	_, err := s.db.Exec(
-		`INSERT INTO children (id, family_id, name, gender, birth_date, created_at)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-		c.ID, c.FamilyID, c.Name, c.Gender, c.BirthDate, c.CreatedAt,
+		`INSERT INTO children (id, name, gender, birth_date, created_at)
+         VALUES (?, ?, ?, ?, ?)`,
+		c.ID, c.Name, c.Gender, c.BirthDate, c.CreatedAt,
 	)
 	return err
 }
 
-func (s *MySQLChildStore) GetByFamilyID(familyID string) ([]*model.Child, error) {
+func (s *MySQLChildStore) GetAll() ([]*model.Child, error) {
 	rows, err := s.db.Query(
-		`SELECT id, family_id, name, gender, birth_date, created_at
-         FROM children WHERE family_id = ?`,
-		familyID,
+		`SELECT id, name, gender, birth_date, created_at FROM children`,
 	)
 	if err != nil {
 		return nil, err
@@ -40,7 +36,7 @@ func (s *MySQLChildStore) GetByFamilyID(familyID string) ([]*model.Child, error)
 	var children []*model.Child
 	for rows.Next() {
 		var c model.Child
-		if err := rows.Scan(&c.ID, &c.FamilyID, &c.Name, &c.Gender, &c.BirthDate, &c.CreatedAt); err != nil {
+		if err := rows.Scan(&c.ID, &c.Name, &c.Gender, &c.BirthDate, &c.CreatedAt); err != nil {
 			return nil, err
 		}
 		children = append(children, &c)
@@ -53,12 +49,11 @@ func (s *MySQLChildStore) GetByFamilyID(familyID string) ([]*model.Child, error)
 
 func (s *MySQLChildStore) GetByID(id string) (*model.Child, error) {
 	row := s.db.QueryRow(
-		`SELECT id, family_id, name, gender, birth_date, created_at
-         FROM children WHERE id = ?`,
+		`SELECT id, name, gender, birth_date, created_at FROM children WHERE id = ?`,
 		id,
 	)
 	var c model.Child
-	err := row.Scan(&c.ID, &c.FamilyID, &c.Name, &c.Gender, &c.BirthDate, &c.CreatedAt)
+	err := row.Scan(&c.ID, &c.Name, &c.Gender, &c.BirthDate, &c.CreatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
